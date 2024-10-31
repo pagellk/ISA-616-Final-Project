@@ -1,0 +1,47 @@
+---
+title: "ISA 616 Final Project"
+author: "Andrew Edwards, Nick Oakley, and Lauren Pagel"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+      toc: yes
+      toc_depth: 4
+      toc_float:
+        collapse: no
+        smooth_scroll: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem Statement
+The ISA department has multiple classes of students each year. However, each year the number of graduate students don’t align with the number of students in the major the previous year. We have been asked to research the data and understand where these students are going, what are the leading causes of students leaving, and to redesign the classification metrics for grade level. The data also needs to be restructured into a more understandable format that can be used to better predict graduation rates each year.
+
+# Research Questions
+* Why are there fewer graduating seniors than estimated each year, and what is the cause for this drop-off?
+  * Where are these students going?
+* What is the best way to classify student grade levels?
+* Are there indicators that can show when we estimate a student is about to graduate?
+
+# Business Value Proposition
+```{r, echo=FALSE}
+knitr::include_graphics('616 Final Project BVP.png')
+```
+
+## Customer Jobs
+
+Our client for this project is the Information Systems and Analytics department at Miami, but more specifically, Dr. Benamati and Dr. Farmer. These two have a very important role in the ISA department to monitor the health of the organization and to appropriate allocate resources based on needs.
+
+### Monitor the Overall Health of the Information Systems and Analytics Department as it Pertains to Departmental Entrollment
+
+As the chairs of the department, Dr. Benamati and Dr. Farmer are tasked with monitoring the overall health and performance of the Information Systems and Analytics department. This can include monitoring departmental enrollment as it pertains to showing the amount of students who enter into ISA majors as freshmen, retention within the department, and ultimately, how many students graduate with a degree from the department. This health ultimately helps Dr. Benamati and Dr. Farmer argue for the case of the ISA department during the State of the Department and can help the department grow over time.
+
+### Allocate Resources Appropriately Depending on the Size and Performance of the Department
+
+Based on the health that is monitored from the department, Dr. Benamati and Dr. Farmer are tasked with allocating resources appropriately. This can include increasing the number of professors or course sections offered depending on the amount of ISA majors that are enrolled. 
+
+## Customer Pains
+
+### Lack of Clarity of BA/ISA Student Grade Classification and Expected Graduating Students
+
