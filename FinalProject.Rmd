@@ -44,4 +44,52 @@ Based on the health that is monitored from the department, Dr. Benamati and Dr. 
 ## Customer Pains
 
 ### Lack of Clarity of BA/ISA Student Grade Classification and Expected Graduating Students
+Student classification of grades has led to inaccurate data regarding the number of expected graduates. 
+
+### Difficulty Understanding Departmental Enrollment
+Due to misclassifications and other factors, there are inaccuracies that misrepresent the true enrollment of the ISA department
+
+### Unclear Presentation of Data
+The current table that is used to present enrollment data can be confusing and inaccurate.
+
+## Customer Gains
+
+### Be Able to Understand How Students are Classified as Freshmen, Sophomores, etc. in the Data Set
+With the current data set, the current classification of grades has led to inaccurate data reporting when it comes to anticipating the number of graduates within the data set.
+
+### Better Understand what Factors May Influence Departmental Enrollment in the ISA Department as Well as Where they Go if they Change their Major
+Within the current data set, there is no way to estimate when a student is about to exit the ISA department, whether that be because they are about to graduate or because they are changing their major. Thus, it makes it difficult for the ISA department to allocate their resources to maximize student benefit.
+
+## Products and Services
+
+### Providing a New Classification Metric for Grade Level of Students (Freshman, Sophomore, etc.)
+Take more factors into account to better determine expected graduation of students. Current method of classification by number of credit hours does not best reflect student year and expected graduation.
+
+### Providing Insight for Departmental Enrollment Numbers and Graduation Rates
+Better indicate when a student is about to graduate from the ISA department so that resources can be allocated effectively.
+
+### Providing a More Informative Presentation of Department Enrollment Numbers
+The current matrix visual within the State of the Department Presentation can be hard for a non-analytical audience to read to understand the enrollment numbers problem easily.
+
+## Pain Relievers
+
+### Accurate Grade Classification that Reflects Expected Graduation
+With the current state of the data, the actual number of graduating seniors is less than the anticipated amount in the previous year. Through our work, we seek to relieve this pain to account for anticipated early graduations, transfers, etc. We also seek to find a better way to classify student grades rather than solely by number of credit hours taken.
+
+### Greater Insights Into True Enrollment Numbers for the ISA Department
+Through our solution, we will provide the ISA department with a more accurate reporting for the ISA department so that they are able to allocate resources and budget effectively for the upcoming year.
+
+### Clear Presentation of the State of the Department
+Through our solution, we will prepare a more effective presentation of the ISA department's numbers in the State of the Department presentation. This information will be well organized in a way that those who do not have a strong background in analytics are still able to obtain valuable insights.
+
+## Gain Creators
+
+### More Dedicated Resources Towards Retaining Students in the ISA Department
+Our solution will give the ISA department the information they need to better plan for the upcoming year by providing estimates of the number of students that will come through the department and eventually graduate each year. This will allow both Dr. Benamati and Dr. Farmer to spend less time on this administrative task and instead on preparing for the longevity of the department.
+
+### Better Classification System to Understand the Ages of Students and When They Are Likely to Graduate
+Our solution will provide the ISA department with a better system to classify students by their grade level so they can better understand and predict the number of students who will graduate from the department.
+
+### 
+
 
