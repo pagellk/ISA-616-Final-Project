@@ -90,6 +90,50 @@ Our solution will give the ISA department the information they need to better pl
 ### Better Classification System to Understand the Ages of Students and When They Are Likely to Graduate
 Our solution will provide the ISA department with a better system to classify students by their grade level so they can better understand and predict the number of students who will graduate from the department.
 
-### 
+# Timeline for Completion
+
+1. Draft of Problem Statement - 
+Due with checkpoint 1 materials on November 4th. Responsible stakeholder: Nick Oakley.
+
+2. Develop Research Questions - 
+Due with checkpoint 1 materials on November 4th. Responsible stakeholder: Andrew Edwards.
+
+3. Business Value Propositions - 
+Due with checkpoint 1 materials on November 4th. Responsible stakeholder: Lauren Pagel.
+
+4. Upload Data into Document - 
+Do by the EOD on November 5th after class. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+5. Clean Dataset - 
+Work on in class on November 5th and 7th, finish by November 10th. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+6. Merge Datasets Together - 
+Finish by November 12th. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+7. Develop Metric to Count the Number of Students for Each Grade Level - 
+Due with the Checkpoint #2 materials on 11/17. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+8. Begin Building Visualizations - 
+Have drafts for checkpoint #2 due on 11/17. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+9. Draft of Final Presentation Slides - 
+Start by 11/17 for initial feedback for checkpoint #2. Have draft done by 11/26 before Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+10. Draft Technical Report - 
+Start by 11/17 for initial feedback for checkpoint #2. Have draft done by 11/26 before Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+11. Revise Technical Report - 
+Finish revisions by noon on 12/1. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+12. Revise Final Presentation Slides - 
+Finish revisions by noon on 12/1. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+13. Submit Final Slides and Technical Report - 
+Submit by EOD December 1st.  Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+14. Deliver Final Presentation - 
+Present on December 3rd. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+
+
 
 
