@@ -1,0 +1,127 @@
+---
+title: "Data Cleaning"
+author: "Andrew Edwards"
+date: "2024-11-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+## read in BA Excel file
+# Install and load the readxl package if not already installed
+if (!require(readxl)) {
+  install.packages("readxl")
+}
+library(readxl)
+
+# Define file paths
+path_attributes_gpa <- "/Users/andrewedwards/Downloads/BA Data 3/BA Major Students - Attributes and GPA.xlsx"
+path_credit_hours <- "/Users/andrewedwards/Downloads/BA Data 3/BA Major Students - Credit Hours.xlsx"
+path_degrees_awarded <- "/Users/andrewedwards/Downloads/BA Data 3/BA Major Students - Degrees Awarded.xlsx"
+path_grades_updated <- "/Users/andrewedwards/Downloads/BA Data 3/BA Major Students - Grades -updated.xlsx"
+path_grades <- "/Users/andrewedwards/Downloads/BA Data 3/BA Major Students - Grades.xlsx"
+path_majors <- "/Users/andrewedwards/Downloads/BA Data 3/BA Major Students - Majors.xlsx"
+path_students <- "/Users/andrewedwards/Downloads/BA Data 3/BA Major Students.xlsx"
+
+# Read each file into a data frame
+df_attributes_gpa <- read_excel(path_attributes_gpa)
+df_credit_hours <- read_excel(path_credit_hours)
+df_degrees_awarded <- read_excel(path_degrees_awarded)
+df_grades_updated <- read_excel(path_grades_updated)
+df_grades <- read_excel(path_grades)
+df_majors <- read_excel(path_majors)
+df_students <- read_excel(path_students)
+
+
+```
+```{r}
+# Check the structure and summary for each data frame
+str(df_attributes_gpa)
+str(df_credit_hours)
+str(df_degrees_awarded)
+str(df_grades_updated)
+str(df_grades)
+str(df_majors)
+str(df_students)
+
+# Basic summary statistics using summary() or skim() for each data frame
+summary(df_attributes_gpa)
+summary(df_credit_hours)
+summary(df_degrees_awarded)
+summary(df_grades_updated)
+summary(df_grades)
+summary(df_majors)
+summary(df_students)
+
+```
+```{r}
+# Check for missing values in each BA data frame
+sapply(df_attributes_gpa, function(x) sum(is.na(x)))
+sapply(df_credit_hours, function(x) sum(is.na(x)))
+sapply(df_degrees_awarded, function(x) sum(is.na(x)))
+sapply(df_grades_updated, function(x) sum(is.na(x)))
+sapply(df_grades, function(x) sum(is.na(x)))
+sapply(df_majors, function(x) sum(is.na(x)))
+sapply(df_students, function(x) sum(is.na(x)))
+
+```
+
+
+```{r}
+# Define file paths for IS data
+path_is_students <- "/Users/andrewedwards/Downloads/IS Data 3/IS Major Students.xlsx"
+path_is_majors <- "/Users/andrewedwards/Downloads/IS Data 3/IS Major Students - Majors.xlsx"
+path_is_grades <- "/Users/andrewedwards/Downloads/IS Data 3/IS Major Students - Grades.xlsx"
+path_is_grades_updated <- "/Users/andrewedwards/Downloads/IS Data 3/IS Major Students - Grades -updated.xlsx"
+path_is_degrees_awarded <- "/Users/andrewedwards/Downloads/IS Data 3/IS Major Students - Degrees Awarded (1).xlsx"
+path_is_credit_hours <- "/Users/andrewedwards/Downloads/IS Data 3/IS Major Students - Credit Hours.xlsx"
+path_is_attributes_gpa <- "/Users/andrewedwards/Downloads/IS Data 3/IS Major Students - Attributes and GPA.xlsx"
+
+# Read each file into a data frame
+df_is_students <- read_excel(path_is_students)
+df_is_majors <- read_excel(path_is_majors)
+df_is_grades <- read_excel(path_is_grades)
+df_is_grades_updated <- read_excel(path_is_grades_updated)
+df_is_degrees_awarded <- read_excel(path_is_degrees_awarded)
+df_is_credit_hours <- read_excel(path_is_credit_hours)
+df_is_attributes_gpa <- read_excel(path_is_attributes_gpa)
+
+```
+```{r}
+# Check the structure of each data frame
+str(df_is_students)
+str(df_is_majors)
+str(df_is_grades)
+str(df_is_grades_updated)
+str(df_is_degrees_awarded)
+str(df_is_credit_hours)
+str(df_is_attributes_gpa)
+
+```
+```{r}
+# Basic summary statistics for each data frame
+summary(df_is_students)
+summary(df_is_majors)
+summary(df_is_grades)
+summary(df_is_grades_updated)
+summary(df_is_degrees_awarded)
+summary(df_is_credit_hours)
+summary(df_is_attributes_gpa)
+```
+```{r}
+# Check for missing values in each data frame
+sapply(df_is_students, function(x) sum(is.na(x)))
+sapply(df_is_majors, function(x) sum(is.na(x)))
+sapply(df_is_grades, function(x) sum(is.na(x)))
+sapply(df_is_grades_updated, function(x) sum(is.na(x)))
+sapply(df_is_degrees_awarded, function(x) sum(is.na(x)))
+sapply(df_is_credit_hours, function(x) sum(is.na(x)))
+sapply(df_is_attributes_gpa, function(x) sum(is.na(x)))
+
+```
+
