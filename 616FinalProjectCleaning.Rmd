@@ -99,7 +99,6 @@ df_is_students$`Enrolled Student Count` = as.numeric(df_is_students$`Enrolled St
 na_counts <- sapply(df_is_students, function(x) sum(is.na(x)))
 
 ## Cleaning df_is_majors
-head(df_is_majors)
 na_counts <- sapply(df_is_majors, function(x) sum(is.na(x)))
 
 
@@ -121,10 +120,24 @@ df_is_majors$`Cohort Term` <- zoo::na.locf(df_is_majors$`Cohort Term`, na.rm = F
 
 na_counts <- sapply(df_is_majors, function(x) sum(is.na(x)))
 
-
-
+## do the same for missing term code values
 df_is_majors <- df_is_majors[order(df_is_majors$`Student ID`, decreasing = TRUE), ]
-print(df_is_majors)
+df_is_majors$`Term Code` <- zoo::na.locf(df_is_majors$`Term Code`, na.rm = FALSE)
+
+## check to ensure all missing values are gone
+na_counts <- sapply(df_is_majors, function(x) sum(is.na(x)))
+
+## Convert columns to numeric where applicable
+df_is_majors$`Student ID` = as.numeric(df_is_majors$`Student ID`)
+unique_values <- unique(df_is_majors$`Cohort Term`)
+# Remove rows where Cohort Term is "none"
+df_is_majors <- df_is_majors[df_is_majors$`Cohort Term` != "none", ]
+df_is_majors$`Cohort Term` = as.numeric(df_is_majors$`Cohort Term`)
+
+df_is_majors$`Term Code` = as.numeric(df_is_majors$`Term Code`)
+df_is_majors$`Enrolled Student Count` = as.numeric(df_is_majors$`Enrolled Student Count`)
+
+
 ```
 
 
