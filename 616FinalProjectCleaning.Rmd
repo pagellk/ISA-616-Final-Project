@@ -25,35 +25,22 @@ path_is_attributes_gpa <- "IS Major Students - Attributes and GPA.xlsx"
 
 # Read each file into a data frame
 df_is_students <- read_excel(path_is_students, col_types = "text")
-na_rows <- is.na(df_is_students$`Student ID`)
-df_is_students <- df_is_students[!na_rows, ]
+
 
 # Read another file in
 df_is_majors <- read_excel(path_is_majors, col_types = "text")
-
-# Fill missing values
-df_is_majors <- df_is_majors |>
-  dplyr::group_by(`Major`) |>
-  tidyr::fill(`Student ID`, `Cohort Term`, .direction = "down") |>
-  dplyr::ungroup()
 
 df_is_grades <- read_excel(path_is_grades, col_types = "text")
 
 df_is_grades_updated <- read_excel(path_is_grades_updated, col_types = "text")
 
-
 df_is_degrees_awarded <- read_excel(path_is_degrees_awarded, col_types = "text")
-df_is_degrees_awarded <- df_is_degrees_awarded |>
-  tidyr::fill(`Student ID`, `Term Code`, `Degree Type`, `Degree`, .direction = "down")
 
 
 df_is_credit_hours <- read_excel(path_is_credit_hours, col_types = "text")
-df_is_credit_hours <- df_is_credit_hours |>
-  tidyr::fill(`Student ID`)
+
 
 df_is_attributes_gpa <- read_excel(path_is_attributes_gpa, col_types = "text")
-df_is_attributes_gpa <- df_is_attributes_gpa |>
-  tidyr::fill('Student ID', 'Gender', 'First Generation Indicator')
 ```
 
 ```{r, echo=FALSE}
@@ -114,12 +101,30 @@ na_counts <- sapply(df_is_students, function(x) sum(is.na(x)))
 ## Cleaning df_is_majors
 head(df_is_majors)
 na_counts <- sapply(df_is_majors, function(x) sum(is.na(x)))
-print(na_counts)
+
 
 ## delete row 2027 onward -- this only provides info on data
 df_is_majors <- df_is_majors[1:2026, ]
 na_counts <- sapply(df_is_majors, function(x) sum(is.na(x)))
-print(na_counts)
+
+
+## fill na student id columns with the previous student id value
+if(require(zoo)==FALSE) install.packages("zoo")
+df_is_majors$`Student ID` <- zoo::na.locf(df_is_majors$`Student ID`, na.rm = FALSE)
+
+na_counts <- sapply(df_is_majors, function(x) sum(is.na(x)))
+
+
+## fill cohort term missing values with the previous cohort term value
+df_is_majors$`Cohort Term` <- zoo::na.locf(df_is_majors$`Cohort Term`, na.rm = FALSE)
+
+
+na_counts <- sapply(df_is_majors, function(x) sum(is.na(x)))
+
+
+
+df_is_majors <- df_is_majors[order(df_is_majors$`Student ID`, decreasing = TRUE), ]
+print(df_is_majors)
 ```
 
 
