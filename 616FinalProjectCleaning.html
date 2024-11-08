@@ -357,14 +357,350 @@ display: none;
 </div>
 
 
-<pre><code>## Warning in `[.tbl_df`(df_is_students, !is.na(as.numeric(df_is_students$`Student
-## ID`)), : NAs introduced by coercion</code></pre>
-<pre><code>## Loading required package: zoo</code></pre>
-<pre><code>## 
-## Attaching package: &#39;zoo&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     as.Date, as.Date.numeric</code></pre>
+<div id="package-installation-and-initialization" class="section level2">
+<h2>Package Installation and Initialization</h2>
+<p>In this portion we use <code>pacman</code> to install the necessary
+packages and clear the global environment.</p>
+<pre class="r"><code>knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning=FALSE, out.width = &quot;100%&quot;)
+#package initialization
+rm(list = ls()) # clear global environment
+graphics.off() # close all graphics
+if(require(pacman)==FALSE) install.packages(&quot;pacman&quot;)
+pacman::p_load(DataExplorer, # For explorer and cleaning data by visualizing missing values.
+               httr, # For downloading the data from the UCI
+               tidyverse, # For data manipulation
+               corrplot, # for heatmaps
+               DataExplorer, #for exploring data
+               skimr, # for nice summary of data
+               readxl, #to read Excel files
+               networkD3 # to create a Sankey Plot
+               ) # For creating dummy variables of categorical variables automatically.)</code></pre>
+</div>
+<div id="load-data" class="section level2">
+<h2>Load data</h2>
+<div id="loading-ba-students" class="section level3">
+<h3>Loading BA Students</h3>
+<p>This is the list of students under consideration. Here is the logic
+for this data pull:</p>
+<pre class="r"><code>if(require(readxl)==FALSE) install.packages(&quot;readxl&quot;)
+
+# Read the Excel file
+BA_Students &lt;- readxl::read_excel(&quot;BA Major Students.xlsx&quot;)
+
+# Display the first few rows of the data
+head(BA_Students)</code></pre>
+<pre><code>## # A tibble: 6 × 2
+##   `Student ID` `Enrolled Student Count`
+##   &lt;chr&gt;        &lt;chr&gt;                   
+## 1 8023864      1                       
+## 2 8024720      1                       
+## 3 8026176      1                       
+## 4 8031298      1                       
+## 5 8034088      1                       
+## 6 8035324      1</code></pre>
+<pre class="r"><code># Print the number of rows and unique students
+paste(&quot;The number of rows in the data is &quot;, nrow(BA_Students))</code></pre>
+<pre><code>## [1] &quot;The number of rows in the data is  839&quot;</code></pre>
+<pre class="r"><code>paste(&quot;The number of unique students is &quot;, length(unique(BA_Students$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  837&quot;</code></pre>
+<pre class="r"><code># Check if the directory exists, if not, create it
+if (!dir.exists(&quot;data-clean&quot;)) {
+  dir.create(&quot;data-clean&quot;)
+}
+
+# Write the data to a CSV file
+write.csv(BA_Students, &quot;data-clean/BA_Students.csv&quot;)</code></pre>
+</div>
+<div id="loading-ba-majors" class="section level3">
+<h3>Loading BA Majors</h3>
+<p>Below I read in the data and fill in the missing values with the
+correct values. The level of analysis is Student ID X Term Code. Each
+student has a row for each term they have been enrolled. Some students
+have one row, others have eight.</p>
+<p>Finally, I make sure that each student has the Cohort Term that is
+equal to the earliest date on record.</p>
+<pre class="r"><code># Read data
+BA_Majors=read_excel(&quot;BA Major Students - Majors.xlsx&quot;)
+# Fill in the blank cells created from the format of the data
+BA_Majors=BA_Majors %&gt;% 
+  fill(c(`Student ID`:`Term Code`),.direction=&quot;down&quot;)
+#Create a separate column for each major.  Unit of analysis here is student by Term Code
+BA_Majors=BA_Majors %&gt;% 
+  group_by(`Student ID`,`Term Code`) %&gt;% 
+  mutate(Major_Number=paste(&quot;Major&quot;,row_number())) %&gt;% 
+  pivot_wider(names_from=Major_Number, values_from=`BA Major`) 
+
+# Set the Cohort Term to the smallest observed value for a given student. 
+BA_Majors=BA_Majors %&gt;% 
+  group_by(`Student ID`) %&gt;% 
+  mutate(`Cohort Term`=min(`Cohort Term`)) 
+
+head(BA_Majors)</code></pre>
+<pre><code>## # A tibble: 6 × 10
+## # Groups:   Student ID [6]
+##   `Student ID` `Cohort Term` `Term Code` `Enrolled Student Count` `Major 1`
+##          &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;                          &lt;dbl&gt; &lt;chr&gt;    
+## 1      8023864 202510        202510                             1 BA Major 
+## 2      8024720 202510        202510                             1 BA Major 
+## 3      8026176 202510        202510                             1 BA Major 
+## 4      8031298 202510        202510                             1 BA Major 
+## 5      8034088 202510        202510                             1 BA Major 
+## 6      8035324 202510        202510                             1 BA Major 
+## # ℹ 5 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;, `Major 4` &lt;chr&gt;,
+## #   `Major 5` &lt;chr&gt;, `Major 6` &lt;chr&gt;</code></pre>
+<pre class="r"><code>paste(&quot;The number of rows is &quot;,nrow(BA_Majors))</code></pre>
+<pre><code>## [1] &quot;The number of rows is  4638&quot;</code></pre>
+<pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique((BA_Majors$`Student ID`))))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  834&quot;</code></pre>
+<pre class="r"><code>write.csv(BA_Majors,&quot;data-clean/BA_Majors.csv&quot;)</code></pre>
+</div>
+<div id="loading-grades" class="section level3">
+<h3>Loading Grades</h3>
+<p>Loaded student grades, filled in missing cells according to the data
+structure. There are only 694 students. This is possibly because the
+freshmen do not yet have grades. I checked this, and there are 140
+freshmen who have no grades. 694+140=834. We have 823 unique students in
+the file. It is possible that 834+823=11 students in cohort 202410 have
+grades, possibly due to dual enrollment or summer classes prior to the
+Fall semester.</p>
+<pre class="r"><code># Read data
+BA_Grades=read_excel(&quot;BA Major Students - Grades.xlsx&quot;)
+# Fill in the blank cells created from the format of the data
+BA_Grades = BA_Grades %&gt;% 
+  fill(c(`Student ID`),.direction=&quot;down&quot;)
+
+head(BA_Grades)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+##   `Student ID` Course `Term Code` Earned Academic Credi…¹ Final Letter Grade G…²
+##          &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;                   &lt;chr&gt;                 
+## 1      8521862 ACC221 201520      Y                       A                     
+## 2      8521862 CSE148 201520      Y                       A                     
+## 3      8521862 FIN301 201710      Y                       A                     
+## 4      8521862 ISA235 201610      Y                       A                     
+## 5      8521862 MGT291 201620      Y                       A                     
+## 6      8521298 ACC221 201520      Y                       A                     
+## # ℹ abbreviated names: ¹​`Earned Academic Credit`, ²​`Final Letter Grade Group`
+## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>tail(BA_Grades)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+##   `Student ID` Course  `Term Code` Earned Academic Cred…¹ Final Letter Grade G…²
+##          &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;                  &lt;chr&gt;                 
+## 1      8071760 CSE148  202410      N                      F                     
+## 2      8071760 ECO201  202410      Y                      D                     
+## 3      8071760 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 4      8071760 SUBSTR… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 5      8071760 Includ… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 6      8071760 999999… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## # ℹ abbreviated names: ¹​`Earned Academic Credit`, ²​`Final Letter Grade Group`
+## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique(BA_Grades$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  739&quot;</code></pre>
+<pre class="r"><code>num_fresh=BA_Majors %&gt;%
+  filter(`Cohort Term`==&quot;202410&quot;)%&gt;%
+  nrow()
+paste(&quot;The number of students starting in term 201410 is &quot;, num_fresh)</code></pre>
+<pre><code>## [1] &quot;The number of students starting in term 201410 is  387&quot;</code></pre>
+<pre class="r"><code>write.csv(BA_Grades,&quot;data-clean/BA_Grades.csv&quot;)</code></pre>
+</div>
+<div id="loading-attributes" class="section level3">
+<h3>Loading Attributes</h3>
+<p>Below I load in the Attributes. There are 134 students with missing
+cumulative GPA.</p>
+<p>The level of analysis for the final data frame is Student ID X Term
+Code.</p>
+<pre class="r"><code># Read data
+BA_Attributes=read_excel(&quot;BA Major Students - Attributes and GPA.xlsx&quot;)
+# Fill in the blank cells created from the format of the data
+BA_Attributes = BA_Attributes %&gt;% 
+  fill(c(`Student ID`:`First Generation Indicator`),.direction=&quot;down&quot;)
+
+paste(&quot;The number of unique students is &quot;,length(unique(BA_Attributes$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  834&quot;</code></pre>
+<pre class="r"><code>head(BA_Attributes)</code></pre>
+<pre><code>## # A tibble: 6 × 6
+##   `Student ID` Gender `First Generation Indicator` `Term Code` `Term UG Crs GPA`
+##          &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;                        &lt;chr&gt;                   &lt;dbl&gt;
+## 1      8023864 Male   Not First Generation Colleg… 202510                     NA
+## 2      8024720 Male   Not First Generation Colleg… 202510                     NA
+## 3      8026176 Male   First Generation College St… 202510                     NA
+## 4      8031298 Female Not First Generation Colleg… 202510                     NA
+## 5      8034088 Male   First Generation College St… 202510                     NA
+## 6      8035324 Male   Not First Generation Colleg… 202510                     NA
+## # ℹ 1 more variable: `Cum UG Crs GPA` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>test=BA_Attributes %&gt;% 
+  filter(is.na(&#39;Term UG Crs GPA&#39;))
+
+paste(&quot;The number of students with no grades &quot;,length(unique(test$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of students with no grades  0&quot;</code></pre>
+<pre class="r"><code>write.csv(BA_Attributes,&quot;data-clean/BA_Attributes.csv&quot;)</code></pre>
+</div>
+</div>
+<div id="is-student-cleaning" class="section level1">
+<h1>IS Student Cleaning</h1>
+<div id="loading-is-students" class="section level3">
+<h3>Loading IS Students</h3>
+<p>This is the list of students under consideration. Here is the logic
+for this data pull:</p>
+<pre class="r"><code>IS_Students=read_excel(&quot;IS Major Students.xlsx&quot;)
+head(IS_Students)</code></pre>
+<pre><code>## # A tibble: 6 × 2
+##   `Student ID` `Enrolled Student Count`
+##   &lt;chr&gt;        &lt;chr&gt;                   
+## 1 8098858      1                       
+## 2 8108061      1                       
+## 3 8109444      1                       
+## 4 8110017      1                       
+## 5 8113940      1                       
+## 6 8115814      1</code></pre>
+<pre class="r"><code>paste(&quot;The number of rows in the data is &quot;,nrow(IS_Students))</code></pre>
+<pre><code>## [1] &quot;The number of rows in the data is  242&quot;</code></pre>
+<pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique(IS_Students$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  240&quot;</code></pre>
+<pre class="r"><code>write.csv(IS_Students,&quot;data-clean/IS_Students.csv&quot;)</code></pre>
+</div>
+<div id="loading-is-majors" class="section level3">
+<h3>Loading IS Majors</h3>
+<p>Below I read in the data and fill in the missing values with the
+correct values. The level of analysis is Student ID X Term Code. Each
+student has a row for each term they have been enrolled. Some students
+have one row, others have eight.</p>
+<p>Finally, I make sure that each student has the Cohort Term that is
+equal to the earliest date on record.</p>
+<pre class="r"><code># Read data
+IS_Majors=read_excel(&quot;IS Major Students - Majors.xlsx&quot;)
+# Fill in the blank cells created from the format of the data
+IS_Majors=IS_Majors %&gt;% 
+  fill(c(`Student ID`:`Term Code`),.direction=&quot;down&quot;)
+colnames(IS_Majors)</code></pre>
+<pre><code>## [1] &quot;Student ID&quot;             &quot;Cohort Term&quot;            &quot;Term Code&quot;             
+## [4] &quot;Major&quot;                  &quot;Enrolled Student Count&quot;</code></pre>
+<pre class="r"><code>#Create a separate column for each major.  Unit of analysis here is student by Term Code
+IS_Majors=IS_Majors %&gt;% 
+  group_by(`Student ID`,`Term Code`) %&gt;% 
+  mutate(Major_Number=paste(&quot;Major&quot;,row_number())) %&gt;% 
+  pivot_wider(names_from=Major_Number, values_from=`Major`) 
+
+# Set the Cohort Term to the smallest observed value for a given student. 
+IS_Majors=IS_Majors %&gt;% 
+  group_by(`Student ID`) %&gt;% 
+  mutate(`Cohort Term`=min(`Cohort Term`)) 
+
+head(IS_Majors)</code></pre>
+<pre><code>## # A tibble: 6 × 9
+## # Groups:   Student ID [3]
+##   `Student ID` `Cohort Term` `Term Code` `Enrolled Student Count` `Major 1`     
+##          &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;                          &lt;dbl&gt; &lt;chr&gt;         
+## 1      8098858 202410        202410                             1 IS Major      
+## 2      8098858 202410        202420                             1 IS Major      
+## 3      8108061 202410        202410                             1 IS Major      
+## 4      8108061 202410        202420                             1 IS Major      
+## 5      8108061 202410        202510                             1 IS Major      
+## 6      8109444 202410        202410                             1 Cybersecurity…
+## # ℹ 4 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;, `Major 4` &lt;chr&gt;,
+## #   `Major 5` &lt;chr&gt;</code></pre>
+<pre class="r"><code>paste(&quot;The number of rows is &quot;,nrow(IS_Majors))</code></pre>
+<pre><code>## [1] &quot;The number of rows is  1756&quot;</code></pre>
+<pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique((IS_Majors$`Student ID`))))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  237&quot;</code></pre>
+<pre class="r"><code>write.csv(IS_Majors,&quot;data-clean/IS_Majors.csv&quot;)</code></pre>
+</div>
+<div id="loading-grades-1" class="section level3">
+<h3>Loading Grades</h3>
+<p>Loaded student grades, filled in missing cells according to the data
+structure. There are only 694 students. This is possibly because the
+freshmen do not yet have grades. I checked this, and there are 140
+freshmen who have no grades. 694+140=834. We have 823 unique students in
+the file. It is possible that 834+823=11 students in cohort 202410 have
+grades, possibly due to dual enrollment or summer classes prior to the
+Fall semester.</p>
+<pre class="r"><code># Read data
+IS_Grades=read_excel(&quot;IS Major Students - Grades.xlsx&quot;)
+# Fill in the blank cells created from the format of the data
+IS_Grades = IS_Grades %&gt;% 
+  fill(c(`Student ID`),.direction=&quot;down&quot;)
+
+head(IS_Grades)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+##   `Student ID` Course `Term Code` Earned Academic Credi…¹ Final Letter Grade G…²
+##          &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;                   &lt;chr&gt;                 
+## 1      8425267 ACC221 201910      Y                       C                     
+## 2      8425267 BUS104 201810      Y                       A                     
+## 3      8425267 CSE148 201820      Y                       D                     
+## 4      8425267 ECO201 201820      Y                       C                     
+## 5      8425267 ISA225 202010      Y                       B                     
+## 6      8425267 ISA235 201920      Y                       B                     
+## # ℹ abbreviated names: ¹​`Earned Academic Credit`, ²​`Final Letter Grade Group`
+## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>tail(IS_Grades)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+##   `Student ID` Course  `Term Code` Earned Academic Cred…¹ Final Letter Grade G…²
+##          &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;                  &lt;chr&gt;                 
+## 1      8098858 CSE148  202410      Y                      C                     
+## 2      8098858 MTH141  202410      Y                      A                     
+## 3      8098858 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 4      8098858 SUBSTR… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 5      8098858 Includ… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 6      8098858 999999… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## # ℹ abbreviated names: ¹​`Earned Academic Credit`, ²​`Final Letter Grade Group`
+## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique(IS_Grades$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  236&quot;</code></pre>
+<pre class="r"><code>num_fresh=IS_Majors %&gt;%
+  filter(`Cohort Term`==&quot;202410&quot;)%&gt;%
+  nrow()
+paste(&quot;The number of students starting in term 201410 is &quot;, num_fresh)</code></pre>
+<pre><code>## [1] &quot;The number of students starting in term 201410 is  26&quot;</code></pre>
+<pre class="r"><code>write.csv(IS_Grades,&quot;data-clean/Grades.csv&quot;)</code></pre>
+</div>
+<div id="loading-attributes-1" class="section level3">
+<h3>Loading Attributes</h3>
+<p>Below I load in the Attributes.</p>
+<p>The level of analysis for the final data frame is Student ID X Term
+Code.</p>
+<pre class="r"><code># Read data
+IS_Attributes=read_excel(&quot;IS Major Students - Attributes and GPA.xlsx&quot;)
+# Fill in the blank cells created from the format of the data
+IS_Attributes = IS_Attributes %&gt;% 
+  fill(c(`Student ID`:`First Generation Indicator`),.direction=&quot;down&quot;)
+
+paste(&quot;The number of unique students is &quot;,length(unique(IS_Attributes$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  237&quot;</code></pre>
+<pre class="r"><code>head(IS_Attributes)</code></pre>
+<pre><code>## # A tibble: 6 × 6
+##   `Student ID` Gender `First Generation Indicator` `Term Code` `Term UG Crs GPA`
+##          &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;                        &lt;chr&gt;                   &lt;dbl&gt;
+## 1      8098858 Male   Not First Generation Colleg… 202410                   2.52
+## 2      8098858 Male   Not First Generation Colleg… 202420                   2.26
+## 3      8108061 Male   Not First Generation Colleg… 202410                   3.86
+## 4      8108061 Male   Not First Generation Colleg… 202420                   3.35
+## 5      8108061 Male   Not First Generation Colleg… 202510                  NA   
+## 6      8109444 Female Not First Generation Colleg… 202410                   3.82
+## # ℹ 1 more variable: `Cum UG Crs GPA` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>test=IS_Attributes %&gt;% 
+  filter(is.na(&#39;Term UG Crs GPA&#39;))
+
+paste(&quot;The number of students with no grades &quot;,length(unique(test$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of students with no grades  0&quot;</code></pre>
+<pre class="r"><code>write.csv(IS_Attributes,&quot;data-clean/Attributes.csv&quot;)</code></pre>
+<pre><code>## # A tibble: 6 × 21
+## # Groups:   Student ID [6]
+##   `Student ID` `Cohort Term` `Term Code.x` `Enrolled Student Count` `Major 1`
+##          &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;                            &lt;dbl&gt; &lt;chr&gt;    
+## 1      8023864 202510        202510                               1 BA Major 
+## 2      8024720 202510        202510                               1 BA Major 
+## 3      8026176 202510        202510                               1 BA Major 
+## 4      8031298 202510        202510                               1 BA Major 
+## 5      8034088 202510        202510                               1 BA Major 
+## 6      8035324 202510        202510                               1 BA Major 
+## # ℹ 16 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;, `Major 4` &lt;chr&gt;,
+## #   `Major 5` &lt;chr&gt;, `Major 6` &lt;chr&gt;, Gender &lt;chr&gt;,
+## #   `First Generation Indicator` &lt;chr&gt;, `Term Code.y` &lt;chr&gt;,
+## #   `Term UG Crs GPA` &lt;dbl&gt;, `Cum UG Crs GPA` &lt;dbl&gt;, Course &lt;chr&gt;,
+## #   `Term Code` &lt;chr&gt;, `Earned Academic Credit` &lt;chr&gt;,
+## #   `Final Letter Grade Group` &lt;chr&gt;, `Final Letter Grade` &lt;chr&gt;,
+## #   `GPA Quality Points` &lt;dbl&gt;</code></pre>
+</div>
+</div>
 
 
 

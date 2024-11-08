@@ -1,9 +1,19 @@
 ---
-title: "Data Cleaning"
-author: "Andrew Edwards, Nick Oakley, and Lauren Pagel"
-date: "2024-11-05"
-output: html_document
+title: "BA Student Movement Data Cleaning"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Andrew Edwards, Nick Oakley, Lauren Pagel"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    toc-expand: true
+    code-tools: true 
+    code-fold: true
+    code-overflow: scroll
+    self-contained: true
+    #bibliography: winerefs.bib
 ---
+
 
 ## Package Installation and Initialization
 
@@ -54,6 +64,8 @@ if (!dir.exists("data-clean")) {
 # Write the data to a CSV file
 write.csv(BA_Students, "data-clean/BA_Students.csv")
 ```
+
+
 ### Loading BA Majors
 
 Below I read in the data and fill in the missing values with the correct values.  The level of analysis is Student ID X Term Code.  Each student has a row for each term they have been enrolled.  Some students have one row, others have eight.
@@ -83,6 +95,7 @@ paste("The number of unique students is ",length(unique((BA_Majors$`Student ID`)
 
 write.csv(BA_Majors,"data-clean/BA_Majors.csv")
 ```
+
 ### Loading Grades
 
 Loaded student grades, filled in missing cells according to the data structure.  There are only 694 students.  This is possibly because the freshmen do not yet have grades. I checked this, and there are 140 freshmen who have no grades.  694+140=834.  We have 823 unique students in the file.  It is possible that 834+823=11 students in cohort 202410 have grades, possibly due to dual enrollment or summer classes prior to the Fall semester.
@@ -104,6 +117,7 @@ paste("The number of students starting in term 201410 is ", num_fresh)
 
 write.csv(BA_Grades,"data-clean/BA_Grades.csv")
 ```
+
 ### Loading Attributes
 
 Below I load in the Attributes.  There are 134 students with missing cumulative GPA.  
@@ -125,126 +139,5 @@ test=BA_Attributes %>%
 
 paste("The number of students with no grades ",length(unique(test$`Student ID`)))
 write.csv(BA_Attributes,"data-clean/BA_Attributes.csv")
-```
-
-
-
-
-```{r, echo=FALSE}
-## join ba_major_final tables together 
-ba_major_final = dplyr::left_join(BA_Majors, BA_Attributes, by = "Student ID")
-
-ba_major_final <- dplyr::left_join(ba_major_final, BA_Grades, by = "Student ID")
-
-
-```
-
-# IS Student Cleaning
-
-
-### Loading IS Students
-
-This is the list of students under consideration.  Here is the logic for this data pull:
-
-
-
-```{r}
-IS_Students=read_excel("IS Major Students.xlsx")
-head(IS_Students)
-paste("The number of rows in the data is ",nrow(IS_Students))
-paste("The number of unique students is ",length(unique(IS_Students$`Student ID`)))
-write.csv(IS_Students,"data-clean/IS_Students.csv")
-
-```
-
-### Loading IS Majors
-
-Below I read in the data and fill in the missing values with the correct values.  The level of analysis is Student ID X Term Code.  Each student has a row for each term they have been enrolled.  Some students have one row, others have eight.
-
-Finally, I make sure that each student has the Cohort Term that is equal to the earliest date on record.
-
-```{r}
-# Read data
-IS_Majors=read_excel("IS Major Students - Majors.xlsx")
-# Fill in the blank cells created from the format of the data
-IS_Majors=IS_Majors %>% 
-  fill(c(`Student ID`:`Term Code`),.direction="down")
-colnames(IS_Majors)
-#Create a separate column for each major.  Unit of analysis here is student by Term Code
-IS_Majors=IS_Majors %>% 
-  group_by(`Student ID`,`Term Code`) %>% 
-  mutate(Major_Number=paste("Major",row_number())) %>% 
-  pivot_wider(names_from=Major_Number, values_from=`Major`) 
-
-# Set the Cohort Term to the smallest observed value for a given student. 
-IS_Majors=IS_Majors %>% 
-  group_by(`Student ID`) %>% 
-  mutate(`Cohort Term`=min(`Cohort Term`)) 
-
-head(IS_Majors)
-paste("The number of rows is ",nrow(IS_Majors))
-paste("The number of unique students is ",length(unique((IS_Majors$`Student ID`))))
-
-write.csv(IS_Majors,"data-clean/IS_Majors.csv")
-```
-
-### Loading Grades
-
-Loaded student grades, filled in missing cells according to the data structure.  There are only 694 students.  This is possibly because the freshmen do not yet have grades. I checked this, and there are 140 freshmen who have no grades.  694+140=834.  We have 823 unique students in the file.  It is possible that 834+823=11 students in cohort 202410 have grades, possibly due to dual enrollment or summer classes prior to the Fall semester.
-
-```{r}
-# Read data
-IS_Grades=read_excel("IS Major Students - Grades.xlsx")
-# Fill in the blank cells created from the format of the data
-IS_Grades = IS_Grades %>% 
-  fill(c(`Student ID`),.direction="down")
-
-head(IS_Grades)
-tail(IS_Grades)
-paste("The number of unique students is ",length(unique(IS_Grades$`Student ID`)))
-num_fresh=IS_Majors %>%
-  filter(`Cohort Term`=="202410")%>%
-  nrow()
-paste("The number of students starting in term 201410 is ", num_fresh)
-
-write.csv(IS_Grades,"data-clean/Grades.csv")
-```
-
-### Loading Attributes
-
-Below I load in the Attributes.    
-
-The level of analysis for the final data frame is Student ID X Term Code.
-
-```{r}
-# Read data
-IS_Attributes=read_excel("IS Major Students - Attributes and GPA.xlsx")
-# Fill in the blank cells created from the format of the data
-IS_Attributes = IS_Attributes %>% 
-  fill(c(`Student ID`:`First Generation Indicator`),.direction="down")
-
-paste("The number of unique students is ",length(unique(IS_Attributes$`Student ID`)))
-
-head(IS_Attributes)
-test=IS_Attributes %>% 
-  filter(is.na('Term UG Crs GPA'))
-
-paste("The number of students with no grades ",length(unique(test$`Student ID`)))
-write.csv(IS_Attributes,"data-clean/Attributes.csv")
-```
-
-```{r, echo=FALSE}
-## join ba_major_final tables together 
-is_major_final = dplyr::left_join(IS_Majors, IS_Attributes, by = "Student ID")
-
-is_major_final <- dplyr::left_join(is_major_final, IS_Grades, by = "Student ID")
-
-
-```
-
-```{r, echo=FALSE}
-## Combine BA and IS Data Together
-final_df <- dplyr::bind_rows(ba_major_final, is_major_final)
-head(final_df)
 ```
 
