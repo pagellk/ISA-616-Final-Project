@@ -89,7 +89,7 @@ Loaded student grades, filled in missing cells according to the data structure. 
 
 ```{r}
 # Read data
-BA_Grades=read_excel("BA Major Students - Grades.xlsx")
+BA_Grades=read_excel("BA Major Students - Grades -updated.xlsx")
 # Fill in the blank cells created from the format of the data
 BA_Grades = BA_Grades %>% 
   fill(c(`Student ID`),.direction="down")
@@ -97,10 +97,7 @@ BA_Grades = BA_Grades %>%
 head(BA_Grades)
 tail(BA_Grades)
 paste("The number of unique students is ",length(unique(BA_Grades$`Student ID`)))
-num_fresh=BA_Majors %>%
-  filter(`Cohort Term`=="202410")%>%
-  nrow()
-paste("The number of students starting in term 201410 is ", num_fresh)
+
 
 write.csv(BA_Grades,"data-clean/BA_Grades.csv")
 ```
@@ -125,6 +122,23 @@ test=BA_Attributes %>%
 
 paste("The number of students with no grades ",length(unique(test$`Student ID`)))
 write.csv(BA_Attributes,"data-clean/BA_Attributes.csv")
+```
+```{r}
+ba_major_crhr = read_excel("BA Major Students - Credit Hours.xlsx")
+
+ba_major_crhr = ba_major_crhr %>% fill(c(`Student ID`),.direction="down")
+
+paste("The number of unique students is ",length(unique(ba_major_crhr$`Student ID`)))
+
+head(ba_major_crhr)
+```
+```{r}
+ba_major_degrees_awarded = read_excel('BA Major Students - Degrees Awarded.xlsx')
+
+ba_major_degrees_awarded = ba_major_degrees_awarded %>% 
+  fill(c(`Student ID`:`Term Code`: 
+           `Degree Type`: `Degree`),.direction="down")
+head(ba_major_degrees_awarded)
 ```
 
 
@@ -194,7 +208,7 @@ Loaded student grades, filled in missing cells according to the data structure. 
 
 ```{r}
 # Read data
-IS_Grades=read_excel("IS Major Students - Grades.xlsx")
+IS_Grades=read_excel("IS Major Students - Grades -updated.xlsx")
 # Fill in the blank cells created from the format of the data
 IS_Grades = IS_Grades %>% 
   fill(c(`Student ID`),.direction="down")
@@ -202,10 +216,7 @@ IS_Grades = IS_Grades %>%
 head(IS_Grades)
 tail(IS_Grades)
 paste("The number of unique students is ",length(unique(IS_Grades$`Student ID`)))
-num_fresh=IS_Majors %>%
-  filter(`Cohort Term`=="202410")%>%
-  nrow()
-paste("The number of students starting in term 201410 is ", num_fresh)
+
 
 write.csv(IS_Grades,"data-clean/Grades.csv")
 ```
@@ -232,12 +243,24 @@ test=IS_Attributes %>%
 paste("The number of students with no grades ",length(unique(test$`Student ID`)))
 write.csv(IS_Attributes,"data-clean/Attributes.csv")
 ```
+```{r}
+is_major_crhr = read_excel("IS Major Students - Credit Hours.xlsx")
+
+is_major_crhr = is_major_crhr %>% fill(c(`Student ID`),.direction="down")
+
+paste("The number of unique students is ",length(unique(is_major_crhr$`Student ID`)))
+
+head(is_major_crhr)
+```
+
 
 ```{r, echo=FALSE}
-## join ba_major_final tables together 
+## join ia_major_final tables together 
 is_major_final = dplyr::left_join(IS_Majors, IS_Attributes, by = "Student ID")
 
 is_major_final <- dplyr::left_join(is_major_final, IS_Grades, by = "Student ID")
+
+
 
 
 ```

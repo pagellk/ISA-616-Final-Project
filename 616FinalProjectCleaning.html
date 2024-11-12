@@ -464,7 +464,7 @@ the file. It is possible that 834+823=11 students in cohort 202410 have
 grades, possibly due to dual enrollment or summer classes prior to the
 Fall semester.</p>
 <pre class="r"><code># Read data
-BA_Grades=read_excel(&quot;BA Major Students - Grades.xlsx&quot;)
+BA_Grades=read_excel(&quot;BA Major Students - Grades -updated.xlsx&quot;)
 # Fill in the blank cells created from the format of the data
 BA_Grades = BA_Grades %&gt;% 
   fill(c(`Student ID`),.direction=&quot;down&quot;)
@@ -473,33 +473,28 @@ head(BA_Grades)</code></pre>
 <pre><code>## # A tibble: 6 × 7
 ##   `Student ID` Course `Term Code` Earned Academic Credi…¹ Final Letter Grade G…²
 ##          &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;                   &lt;chr&gt;                 
-## 1      8521862 ACC221 201520      Y                       A                     
-## 2      8521862 CSE148 201520      Y                       A                     
-## 3      8521862 FIN301 201710      Y                       A                     
-## 4      8521862 ISA235 201610      Y                       A                     
-## 5      8521862 MGT291 201620      Y                       A                     
-## 6      8521298 ACC221 201520      Y                       A                     
+## 1      8071760 CSE148 202410      N                       F                     
+## 2      8094275 CSE148 202420      &lt;NA&gt;                    F                     
+## 3      8114983 CSE148 202420      &lt;NA&gt;                    F                     
+## 4      8126128 CSE148 202320      &lt;NA&gt;                    F                     
+## 5      8139622 CSE148 202310      &lt;NA&gt;                    F                     
+## 6      8144647 MTH141 202310      &lt;NA&gt;                    F                     
 ## # ℹ abbreviated names: ¹​`Earned Academic Credit`, ²​`Final Letter Grade Group`
 ## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
 <pre class="r"><code>tail(BA_Grades)</code></pre>
 <pre><code>## # A tibble: 6 × 7
 ##   `Student ID` Course  `Term Code` Earned Academic Cred…¹ Final Letter Grade G…²
 ##          &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;                  &lt;chr&gt;                 
-## 1      8071760 CSE148  202410      N                      F                     
-## 2      8071760 ECO201  202410      Y                      D                     
-## 3      8071760 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
-## 4      8071760 SUBSTR… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
-## 5      8071760 Includ… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
-## 6      8071760 999999… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 1      8521862 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 2      8521862 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 3      8521862 &lt;NA&gt;    SUBSTRING(… &lt;NA&gt;                   &lt;NA&gt;                  
+## 4      8521862 or      Course Sub… &lt;NA&gt;                   &lt;NA&gt;                  
+## 5      8521862 Includ… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 6      8521862 999999… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
 ## # ℹ abbreviated names: ¹​`Earned Academic Credit`, ²​`Final Letter Grade Group`
 ## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
 <pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique(BA_Grades$`Student ID`)))</code></pre>
-<pre><code>## [1] &quot;The number of unique students is  739&quot;</code></pre>
-<pre class="r"><code>num_fresh=BA_Majors %&gt;%
-  filter(`Cohort Term`==&quot;202410&quot;)%&gt;%
-  nrow()
-paste(&quot;The number of students starting in term 201410 is &quot;, num_fresh)</code></pre>
-<pre><code>## [1] &quot;The number of students starting in term 201410 is  387&quot;</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  747&quot;</code></pre>
 <pre class="r"><code>write.csv(BA_Grades,&quot;data-clean/BA_Grades.csv&quot;)</code></pre>
 </div>
 <div id="loading-attributes" class="section level3">
@@ -533,6 +528,42 @@ paste(&quot;The number of unique students is &quot;,length(unique(BA_Attributes$
 paste(&quot;The number of students with no grades &quot;,length(unique(test$`Student ID`)))</code></pre>
 <pre><code>## [1] &quot;The number of students with no grades  0&quot;</code></pre>
 <pre class="r"><code>write.csv(BA_Attributes,&quot;data-clean/BA_Attributes.csv&quot;)</code></pre>
+<pre class="r"><code>ba_major_crhr = read_excel(&quot;BA Major Students - Credit Hours.xlsx&quot;)
+
+ba_major_crhr = ba_major_crhr %&gt;% fill(c(`Student ID`),.direction=&quot;down&quot;)
+
+paste(&quot;The number of unique students is &quot;,length(unique(ba_major_crhr$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  831&quot;</code></pre>
+<pre class="r"><code>head(ba_major_crhr)</code></pre>
+<pre><code>## # A tibble: 6 × 5
+##   `Student ID` `Term Code` `Term UG MU Earned CrHr` Term UG Overall Earned CrH…¹
+##          &lt;dbl&gt; &lt;chr&gt;                          &lt;dbl&gt;                        &lt;dbl&gt;
+## 1      8023864 202510                            NA                           NA
+## 2      8024720 202510                            NA                           NA
+## 3      8024720 202520                            NA                           NA
+## 4      8026176 202510                             0                            3
+## 5      8034088 202510                             0                            7
+## 6      8035324 202510                             0                            4
+## # ℹ abbreviated name: ¹​`Term UG Overall Earned CrHr (MU and Non-MU)`
+## # ℹ 1 more variable: `Cum UG Overall Earned CrHr (MU and Non-MU)` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>ba_major_degrees_awarded = read_excel(&#39;BA Major Students - Degrees Awarded.xlsx&#39;)
+
+ba_major_degrees_awarded = ba_major_degrees_awarded %&gt;% 
+  fill(c(`Student ID`:`Term Code`: 
+           `Degree Type`: `Degree`),.direction=&quot;down&quot;)
+head(ba_major_degrees_awarded)</code></pre>
+<pre><code>## # A tibble: 6 × 9
+##   `Student ID` `Term Code` `Degree Type` Degree     Major Student Division Cod…¹
+##   &lt;chr&gt;        &lt;chr&gt;       &lt;chr&gt;         &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;                 
+## 1 8129435      202520      Bachelor      B.S. in B… Busi… FSB                   
+## 2 8144902      202520      Bachelor      B.S. in B… Busi… FSB                   
+## 3 8144902      202520      Bachelor      B.S. in B… Mark… FSB                   
+## 4 8149335      202520      Bachelor      B.S. in B… Busi… FSB                   
+## 5 8164296      202520      Bachelor      B.S. in B… Busi… FSB                   
+## 6 8164296      202520      Bachelor      B.S. in B… Huma… FSB                   
+## # ℹ abbreviated name: ¹​`Student Division Code`
+## # ℹ 3 more variables: `Student Department Code` &lt;chr&gt;,
+## #   `Semesters to Degree Average` &lt;dbl&gt;, `AW - Major Count` &lt;dbl&gt;</code></pre>
 </div>
 </div>
 <div id="is-student-cleaning" class="section level1">
@@ -614,7 +645,7 @@ the file. It is possible that 834+823=11 students in cohort 202410 have
 grades, possibly due to dual enrollment or summer classes prior to the
 Fall semester.</p>
 <pre class="r"><code># Read data
-IS_Grades=read_excel(&quot;IS Major Students - Grades.xlsx&quot;)
+IS_Grades=read_excel(&quot;IS Major Students - Grades -updated.xlsx&quot;)
 # Fill in the blank cells created from the format of the data
 IS_Grades = IS_Grades %&gt;% 
   fill(c(`Student ID`),.direction=&quot;down&quot;)
@@ -635,21 +666,16 @@ head(IS_Grades)</code></pre>
 <pre><code>## # A tibble: 6 × 7
 ##   `Student ID` Course  `Term Code` Earned Academic Cred…¹ Final Letter Grade G…²
 ##          &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;                  &lt;chr&gt;                 
-## 1      8098858 CSE148  202410      Y                      C                     
-## 2      8098858 MTH141  202410      Y                      A                     
-## 3      8098858 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
-## 4      8098858 SUBSTR… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 1      8098858 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 2      8098858 &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
+## 3      8098858 &lt;NA&gt;    SUBSTRING(… &lt;NA&gt;                   &lt;NA&gt;                  
+## 4      8098858 or      Course Sub… &lt;NA&gt;                   &lt;NA&gt;                  
 ## 5      8098858 Includ… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
 ## 6      8098858 999999… &lt;NA&gt;        &lt;NA&gt;                   &lt;NA&gt;                  
 ## # ℹ abbreviated names: ¹​`Earned Academic Credit`, ²​`Final Letter Grade Group`
 ## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
 <pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique(IS_Grades$`Student ID`)))</code></pre>
 <pre><code>## [1] &quot;The number of unique students is  236&quot;</code></pre>
-<pre class="r"><code>num_fresh=IS_Majors %&gt;%
-  filter(`Cohort Term`==&quot;202410&quot;)%&gt;%
-  nrow()
-paste(&quot;The number of students starting in term 201410 is &quot;, num_fresh)</code></pre>
-<pre><code>## [1] &quot;The number of students starting in term 201410 is  26&quot;</code></pre>
 <pre class="r"><code>write.csv(IS_Grades,&quot;data-clean/Grades.csv&quot;)</code></pre>
 </div>
 <div id="loading-attributes-1" class="section level3">
@@ -682,6 +708,24 @@ paste(&quot;The number of unique students is &quot;,length(unique(IS_Attributes$
 paste(&quot;The number of students with no grades &quot;,length(unique(test$`Student ID`)))</code></pre>
 <pre><code>## [1] &quot;The number of students with no grades  0&quot;</code></pre>
 <pre class="r"><code>write.csv(IS_Attributes,&quot;data-clean/Attributes.csv&quot;)</code></pre>
+<pre class="r"><code>is_major_crhr = read_excel(&quot;IS Major Students - Credit Hours.xlsx&quot;)
+
+is_major_crhr = is_major_crhr %&gt;% fill(c(`Student ID`),.direction=&quot;down&quot;)
+
+paste(&quot;The number of unique students is &quot;,length(unique(is_major_crhr$`Student ID`)))</code></pre>
+<pre><code>## [1] &quot;The number of unique students is  237&quot;</code></pre>
+<pre class="r"><code>head(is_major_crhr)</code></pre>
+<pre><code>## # A tibble: 6 × 5
+##   `Student ID` `Term Code` `Term UG MU Earned CrHr` Term UG Overall Earned CrH…¹
+##          &lt;dbl&gt; &lt;chr&gt;                          &lt;dbl&gt;                        &lt;dbl&gt;
+## 1      8098858 202410                            16                           16
+## 2      8098858 202420                            15                           15
+## 3      8108061 202410                            15                           39
+## 4      8108061 202420                            14                           14
+## 5      8108061 202510                            NA                           NA
+## 6      8109444 202410                            15                           53
+## # ℹ abbreviated name: ¹​`Term UG Overall Earned CrHr (MU and Non-MU)`
+## # ℹ 1 more variable: `Cum UG Overall Earned CrHr (MU and Non-MU)` &lt;dbl&gt;</code></pre>
 <pre><code>## # A tibble: 6 × 21
 ## # Groups:   Student ID [6]
 ##   `Student ID` `Cohort Term` `Term Code.x` `Enrolled Student Count` `Major 1`
