@@ -28,32 +28,6 @@ pacman::p_load(DataExplorer, # For explorer and cleaning data by visualizing mis
 
 ## Load data
 
-### Loading BA Students
-
-This is the list of students under consideration.  Here is the logic for this data pull:
-
-
-```{r}
-if(require(readxl)==FALSE) install.packages("readxl")
-
-# Read the Excel file
-BA_Students <- readxl::read_excel("BA Major Students.xlsx")
-
-# Display the first few rows of the data
-head(BA_Students)
-
-# Print the number of rows and unique students
-paste("The number of rows in the data is ", nrow(BA_Students))
-paste("The number of unique students is ", length(unique(BA_Students$`Student ID`)))
-
-# Check if the directory exists, if not, create it
-if (!dir.exists("data-clean")) {
-  dir.create("data-clean")
-}
-
-# Write the data to a CSV file
-write.csv(BA_Students, "data-clean/BA_Students.csv")
-```
 ### Loading BA Majors
 
 Below I read in the data and fill in the missing values with the correct values.  The level of analysis is Student ID X Term Code.  Each student has a row for each term they have been enrolled.  Some students have one row, others have eight.
@@ -139,6 +113,7 @@ ba_major_crhr = ba_major_crhr %>% fill(c(`Student ID`),.direction="down")
 paste("The number of unique students is ",length(unique(ba_major_crhr$`Student ID`)))
 
 head(ba_major_crhr)
+write.csv(ba_major_crhr, "data-clean/BA_CreditHours.csv")
 ```
 ```{r}
 ba_major_degrees_awarded = read_excel('BA Major Students - Degrees Awarded.xlsx')
@@ -147,19 +122,45 @@ ba_major_degrees_awarded = ba_major_degrees_awarded %>%
   fill(c(`Student ID`:`Term Code`: 
            `Degree Type`: `Degree`),.direction="down")
 head(ba_major_degrees_awarded)
+
+# Step 1: Create a separate column for each major (unit of analysis is student by Term Code)
+ba_major_degrees_awarded <- ba_major_degrees_awarded %>%  
+  group_by(`Student ID`, `Term Code`) %>%  
+  mutate(Major_Number = paste("Major", row_number())) %>%  
+  pivot_wider(names_from = Major_Number, values_from = `Major`) 
+
+# Step 2: Ensure each student has only one row per term with all their majors side by side
+# We'll use mutate to keep all columns, including Semesters to Degree Average
+ba_major_degrees_awarded <- ba_major_degrees_awarded %>%
+  group_by(`Student ID`, `Term Code`) %>%
+  mutate(across(starts_with("Major"), ~ first(na.omit(.)), .names = "{.col}")) %>%
+  ungroup()
+
+# Step 3: Set the Cohort Term to the smallest observed Term Code for each student
+ba_major_degrees_awarded <- ba_major_degrees_awarded %>%  
+  group_by(`Student ID`) %>%  # Group by Student ID to find the minimum Term Code per student
+  mutate(`Cohort Term` = min(`Term Code`)) %>%  # Set Cohort Term to the smallest Term Code for each student
+  ungroup()  # Ungroup to return to a regular data frame
+
+
+ba_major_degrees_awarded$`Student Division Code` = NULL
+ba_major_degrees_awarded$`Student Department Code` = NULL
+ba_major_degrees_awarded$`AW - Major Count` = NULL
+ba_major_degrees_awarded$`Cohort Term` = NULL
+
+# View the result
+head(ba_major_degrees_awarded)
+
+value_counts <- table(ba_major_degrees_awarded$`Semesters to Degree Average`)
+
+# Print the value counts
+print(value_counts)
+
+write.csv(ba_major_degrees_awarded, "data-clean/BADegrees.csv")
 ```
 
 
 
-
-```{r, echo=FALSE}
-## join ba_major_final tables together 
-ba_major_final = dplyr::left_join(BA_Majors, BA_Attributes, by = "Student ID")
-
-ba_major_final <- dplyr::left_join(ba_major_final, BA_Grades, by = "Student ID")
-
-
-```
 
 # IS Student Cleaning
 
@@ -168,16 +169,6 @@ ba_major_final <- dplyr::left_join(ba_major_final, BA_Grades, by = "Student ID")
 
 This is the list of students under consideration.  Here is the logic for this data pull:
 
-
-
-```{r}
-IS_Students=read_excel("IS Major Students.xlsx")
-head(IS_Students)
-paste("The number of rows in the data is ",nrow(IS_Students))
-paste("The number of unique students is ",length(unique(IS_Students$`Student ID`)))
-write.csv(IS_Students,"data-clean/IS_Students.csv")
-
-```
 
 ### Loading IS Majors
 
@@ -232,7 +223,7 @@ tail(IS_Grades)
 paste("The number of unique students is ",length(unique(IS_Grades$`Student ID`)))
 
 
-write.csv(IS_Grades,"data-clean/Grades.csv")
+write.csv(IS_Grades,"data-clean/IS_Grades.csv")
 ```
 
 ### Loading Attributes
@@ -255,7 +246,7 @@ test=IS_Attributes %>%
   filter(is.na('Term UG Crs GPA'))
 
 paste("The number of students with no grades ",length(unique(test$`Student ID`)))
-write.csv(IS_Attributes,"data-clean/Attributes.csv")
+write.csv(IS_Attributes,"data-clean/IS_Attributes.csv")
 ```
 ```{r}
 is_major_crhr = read_excel("IS Major Students - Credit Hours.xlsx")
@@ -265,23 +256,55 @@ is_major_crhr = is_major_crhr %>% fill(c(`Student ID`),.direction="down")
 paste("The number of unique students is ",length(unique(is_major_crhr$`Student ID`)))
 
 head(is_major_crhr)
+write.csv(is_major_crhr, "data-clean/IS_CreditHours.csv")
+```
+
+I will now clean the major degrees awared file for IS Majors. One field that is of particular interest to me is how many semesters it took a student to graduate, which can be displayed by the average of that field below. We found that, overwhelmingly, it took students 8 semester of coursework at Miami before they graduated. This provides our team with the valuable insight that graduation is likely better shown by the number of semesters of enrollment as opposed to number of credit hours completed.
+```{r}
+is_major_degrees_awarded = read_excel('IS Major Students - Degrees Awarded (1).xlsx')
+
+is_major_degrees_awarded = is_major_degrees_awarded %>% 
+  fill(c(`Student ID`:`Term Code`: 
+           `Degree Type`: `Degree`),.direction="down")
+head(is_major_degrees_awarded)
+
+# Step 1: Create a separate column for each major (unit of analysis is student by Term Code)
+is_major_degrees_awarded <- is_major_degrees_awarded %>%  
+  group_by(`Student ID`, `Term Code`) %>%  
+  mutate(Major_Number = paste("Major", row_number())) %>%  
+  pivot_wider(names_from = Major_Number, values_from = `Major`) 
+
+# Step 2: Ensure each student has only one row per term with all their majors side by side
+# We'll use mutate to keep all columns, including Semesters to Degree Average
+is_major_degrees_awarded <- is_major_degrees_awarded %>%
+  group_by(`Student ID`, `Term Code`) %>%
+  mutate(across(starts_with("Major"), ~ first(na.omit(.)), .names = "{.col}")) %>%
+  ungroup()
+
+# Step 3: Set the Cohort Term to the smallest observed Term Code for each student
+is_major_degrees_awarded <- is_major_degrees_awarded %>%  
+  group_by(`Student ID`) %>%  # Group by Student ID to find the minimum Term Code per student
+  mutate(`Cohort Term` = min(`Term Code`)) %>%  # Set Cohort Term to the smallest Term Code for each student
+  ungroup()  # Ungroup to return to a regular data frame
+
+is_major_degrees_awarded <- is_major_degrees_awarded[-211, ]
+
+is_major_degrees_awarded$`Student Division Code` = NULL
+is_major_degrees_awarded$`Student Department Code` = NULL
+is_major_degrees_awarded$`AW - Major Count` = NULL
+is_major_degrees_awarded$`Cohort Term` = NULL
+
+# View the result
+head(is_major_degrees_awarded)
+
+value_counts <- table(is_major_degrees_awarded$`Semesters to Degree Average`)
+
+# Print the value counts
+print(value_counts)
+
+write.csv(is_major_degrees_awarded, "data-clean/ISDegrees.csv")
 ```
 
 
-```{r, echo=FALSE}
-## join ia_major_final tables together 
-is_major_final = dplyr::left_join(IS_Majors, IS_Attributes, by = "Student ID")
 
-is_major_final <- dplyr::left_join(is_major_final, IS_Grades, by = "Student ID")
-
-
-
-
-```
-
-```{r, echo=FALSE}
-## Combine BA and IS Data Together
-final_df <- dplyr::bind_rows(ba_major_final, is_major_final)
-head(final_df)
-```
 

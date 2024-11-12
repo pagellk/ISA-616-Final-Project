@@ -378,39 +378,6 @@ pacman::p_load(DataExplorer, # For explorer and cleaning data by visualizing mis
 </div>
 <div id="load-data" class="section level2">
 <h2>Load data</h2>
-<div id="loading-ba-students" class="section level3">
-<h3>Loading BA Students</h3>
-<p>This is the list of students under consideration. Here is the logic
-for this data pull:</p>
-<pre class="r"><code>if(require(readxl)==FALSE) install.packages(&quot;readxl&quot;)
-
-# Read the Excel file
-BA_Students &lt;- readxl::read_excel(&quot;BA Major Students.xlsx&quot;)
-
-# Display the first few rows of the data
-head(BA_Students)</code></pre>
-<pre><code>## # A tibble: 6 × 2
-##   `Student ID` `Enrolled Student Count`
-##   &lt;chr&gt;        &lt;chr&gt;                   
-## 1 8023864      1                       
-## 2 8024720      1                       
-## 3 8026176      1                       
-## 4 8031298      1                       
-## 5 8034088      1                       
-## 6 8035324      1</code></pre>
-<pre class="r"><code># Print the number of rows and unique students
-paste(&quot;The number of rows in the data is &quot;, nrow(BA_Students))</code></pre>
-<pre><code>## [1] &quot;The number of rows in the data is  839&quot;</code></pre>
-<pre class="r"><code>paste(&quot;The number of unique students is &quot;, length(unique(BA_Students$`Student ID`)))</code></pre>
-<pre><code>## [1] &quot;The number of unique students is  837&quot;</code></pre>
-<pre class="r"><code># Check if the directory exists, if not, create it
-if (!dir.exists(&quot;data-clean&quot;)) {
-  dir.create(&quot;data-clean&quot;)
-}
-
-# Write the data to a CSV file
-write.csv(BA_Students, &quot;data-clean/BA_Students.csv&quot;)</code></pre>
-</div>
 <div id="loading-ba-majors" class="section level3">
 <h3>Loading BA Majors</h3>
 <p>Below I read in the data and fill in the missing values with the
@@ -562,6 +529,7 @@ paste(&quot;The number of unique students is &quot;,length(unique(ba_major_crhr$
 ## 6      8035324 202510                             0                            4
 ## # ℹ abbreviated name: ¹​`Term UG Overall Earned CrHr (MU and Non-MU)`
 ## # ℹ 1 more variable: `Cum UG Overall Earned CrHr (MU and Non-MU)` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>write.csv(ba_major_crhr, &quot;data-clean/BA_CreditHours.csv&quot;)</code></pre>
 <pre class="r"><code>ba_major_degrees_awarded = read_excel(&#39;BA Major Students - Degrees Awarded.xlsx&#39;)
 
 ba_major_degrees_awarded = ba_major_degrees_awarded %&gt;% 
@@ -580,6 +548,52 @@ head(ba_major_degrees_awarded)</code></pre>
 ## # ℹ abbreviated name: ¹​`Student Division Code`
 ## # ℹ 3 more variables: `Student Department Code` &lt;chr&gt;,
 ## #   `Semesters to Degree Average` &lt;dbl&gt;, `AW - Major Count` &lt;dbl&gt;</code></pre>
+<pre class="r"><code># Step 1: Create a separate column for each major (unit of analysis is student by Term Code)
+ba_major_degrees_awarded &lt;- ba_major_degrees_awarded %&gt;%  
+  group_by(`Student ID`, `Term Code`) %&gt;%  
+  mutate(Major_Number = paste(&quot;Major&quot;, row_number())) %&gt;%  
+  pivot_wider(names_from = Major_Number, values_from = `Major`) 
+
+# Step 2: Ensure each student has only one row per term with all their majors side by side
+# We&#39;ll use mutate to keep all columns, including Semesters to Degree Average
+ba_major_degrees_awarded &lt;- ba_major_degrees_awarded %&gt;%
+  group_by(`Student ID`, `Term Code`) %&gt;%
+  mutate(across(starts_with(&quot;Major&quot;), ~ first(na.omit(.)), .names = &quot;{.col}&quot;)) %&gt;%
+  ungroup()
+
+# Step 3: Set the Cohort Term to the smallest observed Term Code for each student
+ba_major_degrees_awarded &lt;- ba_major_degrees_awarded %&gt;%  
+  group_by(`Student ID`) %&gt;%  # Group by Student ID to find the minimum Term Code per student
+  mutate(`Cohort Term` = min(`Term Code`)) %&gt;%  # Set Cohort Term to the smallest Term Code for each student
+  ungroup()  # Ungroup to return to a regular data frame
+
+
+ba_major_degrees_awarded$`Student Division Code` = NULL
+ba_major_degrees_awarded$`Student Department Code` = NULL
+ba_major_degrees_awarded$`AW - Major Count` = NULL
+ba_major_degrees_awarded$`Cohort Term` = NULL
+
+# View the result
+head(ba_major_degrees_awarded)</code></pre>
+<pre><code>## # A tibble: 6 × 8
+##   `Student ID` `Term Code` `Degree Type` Degree Semesters to Degree …¹ `Major 1`
+##   &lt;chr&gt;        &lt;chr&gt;       &lt;chr&gt;         &lt;chr&gt;                   &lt;dbl&gt; &lt;chr&gt;    
+## 1 8129435      202520      Bachelor      B.S. …                      6 Business…
+## 2 8144902      202520      Bachelor      B.S. …                      6 Business…
+## 3 8144902      202520      Bachelor      B.S. …                      6 Business…
+## 4 8149335      202520      Bachelor      B.S. …                      6 Business…
+## 5 8164296      202520      Bachelor      B.S. …                      6 Business…
+## 6 8164296      202520      Bachelor      B.S. …                      6 Business…
+## # ℹ abbreviated name: ¹​`Semesters to Degree Average`
+## # ℹ 2 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;</code></pre>
+<pre class="r"><code>value_counts &lt;- table(ba_major_degrees_awarded$`Semesters to Degree Average`)
+
+# Print the value counts
+print(value_counts)</code></pre>
+<pre><code>## 
+##   4   6   7   8   9  10  11 
+##   1  25  51 462  18   9   1</code></pre>
+<pre class="r"><code>write.csv(ba_major_degrees_awarded, &quot;data-clean/BADegrees.csv&quot;)</code></pre>
 </div>
 </div>
 <div id="is-student-cleaning" class="section level1">
@@ -588,22 +602,6 @@ head(ba_major_degrees_awarded)</code></pre>
 <h3>Loading IS Students</h3>
 <p>This is the list of students under consideration. Here is the logic
 for this data pull:</p>
-<pre class="r"><code>IS_Students=read_excel(&quot;IS Major Students.xlsx&quot;)
-head(IS_Students)</code></pre>
-<pre><code>## # A tibble: 6 × 2
-##   `Student ID` `Enrolled Student Count`
-##   &lt;chr&gt;        &lt;chr&gt;                   
-## 1 8098858      1                       
-## 2 8108061      1                       
-## 3 8109444      1                       
-## 4 8110017      1                       
-## 5 8113940      1                       
-## 6 8115814      1</code></pre>
-<pre class="r"><code>paste(&quot;The number of rows in the data is &quot;,nrow(IS_Students))</code></pre>
-<pre><code>## [1] &quot;The number of rows in the data is  242&quot;</code></pre>
-<pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique(IS_Students$`Student ID`)))</code></pre>
-<pre><code>## [1] &quot;The number of unique students is  240&quot;</code></pre>
-<pre class="r"><code>write.csv(IS_Students,&quot;data-clean/IS_Students.csv&quot;)</code></pre>
 </div>
 <div id="loading-is-majors" class="section level3">
 <h3>Loading IS Majors</h3>
@@ -708,7 +706,7 @@ head(IS_Grades)</code></pre>
 ## # ℹ 2 more variables: `Final Letter Grade` &lt;chr&gt;, `GPA Quality Points` &lt;dbl&gt;</code></pre>
 <pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique(IS_Grades$`Student ID`)))</code></pre>
 <pre><code>## [1] &quot;The number of unique students is  236&quot;</code></pre>
-<pre class="r"><code>write.csv(IS_Grades,&quot;data-clean/Grades.csv&quot;)</code></pre>
+<pre class="r"><code>write.csv(IS_Grades,&quot;data-clean/IS_Grades.csv&quot;)</code></pre>
 </div>
 <div id="loading-attributes-1" class="section level3">
 <h3>Loading Attributes</h3>
@@ -739,7 +737,7 @@ paste(&quot;The number of unique students is &quot;,length(unique(IS_Attributes$
 
 paste(&quot;The number of students with no grades &quot;,length(unique(test$`Student ID`)))</code></pre>
 <pre><code>## [1] &quot;The number of students with no grades  0&quot;</code></pre>
-<pre class="r"><code>write.csv(IS_Attributes,&quot;data-clean/Attributes.csv&quot;)</code></pre>
+<pre class="r"><code>write.csv(IS_Attributes,&quot;data-clean/IS_Attributes.csv&quot;)</code></pre>
 <pre class="r"><code>is_major_crhr = read_excel(&quot;IS Major Students - Credit Hours.xlsx&quot;)
 
 is_major_crhr = is_major_crhr %&gt;% fill(c(`Student ID`),.direction=&quot;down&quot;)
@@ -758,22 +756,80 @@ paste(&quot;The number of unique students is &quot;,length(unique(is_major_crhr$
 ## 6      8109444 202410                            15                           53
 ## # ℹ abbreviated name: ¹​`Term UG Overall Earned CrHr (MU and Non-MU)`
 ## # ℹ 1 more variable: `Cum UG Overall Earned CrHr (MU and Non-MU)` &lt;dbl&gt;</code></pre>
-<pre><code>## # A tibble: 6 × 18
-## # Groups:   Student ID [6]
-##   `Student ID` `Cohort Term` `Term Code.x` `Enrolled Student Count` `Major 1`
-##          &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;                            &lt;dbl&gt; &lt;chr&gt;    
-## 1      8023864 202510        202510                               1 BA Major 
-## 2      8024720 202510        202510                               1 BA Major 
-## 3      8026176 202510        202510                               1 BA Major 
-## 4      8031298 202510        202510                               1 BA Major 
-## 5      8034088 202510        202510                               1 BA Major 
-## 6      8035324 202510        202510                               1 BA Major 
-## # ℹ 13 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;, Gender &lt;chr&gt;,
-## #   `First Generation Indicator` &lt;chr&gt;, `Term Code.y` &lt;chr&gt;,
-## #   `Term UG Crs GPA` &lt;dbl&gt;, `Cum UG Crs GPA` &lt;dbl&gt;, Course &lt;chr&gt;,
-## #   `Term Code` &lt;chr&gt;, `Earned Academic Credit` &lt;chr&gt;,
-## #   `Final Letter Grade Group` &lt;chr&gt;, `Final Letter Grade` &lt;chr&gt;,
-## #   `GPA Quality Points` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>write.csv(is_major_crhr, &quot;data-clean/IS_CreditHours.csv&quot;)</code></pre>
+<p>I will now clean the major degrees awared file for IS Majors. One
+field that is of particular interest to me is how many semesters it took
+a student to graduate, which can be displayed by the average of that
+field below. We found that, overwhelmingly, it took students 8 semester
+of coursework at Miami before they graduated. This provides our team
+with the valuable insight that graduation is likely better shown by the
+number of semesters of enrollment as opposed to number of credit hours
+completed.</p>
+<pre class="r"><code>is_major_degrees_awarded = read_excel(&#39;IS Major Students - Degrees Awarded (1).xlsx&#39;)
+
+is_major_degrees_awarded = is_major_degrees_awarded %&gt;% 
+  fill(c(`Student ID`:`Term Code`: 
+           `Degree Type`: `Degree`),.direction=&quot;down&quot;)
+head(is_major_degrees_awarded)</code></pre>
+<pre><code>## # A tibble: 6 × 9
+##   `Student ID` `Term Code` `Degree Type` Degree     Major Student Division Cod…¹
+##   &lt;chr&gt;        &lt;chr&gt;       &lt;chr&gt;         &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;                 
+## 1 8183142      202520      Bachelor      B.S. in B… Info… FSB                   
+## 2 8185339      202520      Bachelor      B.S. in B… Entr… FSB                   
+## 3 8185339      202520      Bachelor      B.S. in B… Info… FSB                   
+## 4 8188789      202520      Bachelor      B.S. in B… Info… FSB                   
+## 5 8189765      202520      Bachelor      B.S. in B… Info… FSB                   
+## 6 8190053      202520      Bachelor      B.S. in B… Info… FSB                   
+## # ℹ abbreviated name: ¹​`Student Division Code`
+## # ℹ 3 more variables: `Student Department Code` &lt;chr&gt;,
+## #   `Semesters to Degree Average` &lt;dbl&gt;, `AW - Major Count` &lt;dbl&gt;</code></pre>
+<pre class="r"><code># Step 1: Create a separate column for each major (unit of analysis is student by Term Code)
+is_major_degrees_awarded &lt;- is_major_degrees_awarded %&gt;%  
+  group_by(`Student ID`, `Term Code`) %&gt;%  
+  mutate(Major_Number = paste(&quot;Major&quot;, row_number())) %&gt;%  
+  pivot_wider(names_from = Major_Number, values_from = `Major`) 
+
+# Step 2: Ensure each student has only one row per term with all their majors side by side
+# We&#39;ll use mutate to keep all columns, including Semesters to Degree Average
+is_major_degrees_awarded &lt;- is_major_degrees_awarded %&gt;%
+  group_by(`Student ID`, `Term Code`) %&gt;%
+  mutate(across(starts_with(&quot;Major&quot;), ~ first(na.omit(.)), .names = &quot;{.col}&quot;)) %&gt;%
+  ungroup()
+
+# Step 3: Set the Cohort Term to the smallest observed Term Code for each student
+is_major_degrees_awarded &lt;- is_major_degrees_awarded %&gt;%  
+  group_by(`Student ID`) %&gt;%  # Group by Student ID to find the minimum Term Code per student
+  mutate(`Cohort Term` = min(`Term Code`)) %&gt;%  # Set Cohort Term to the smallest Term Code for each student
+  ungroup()  # Ungroup to return to a regular data frame
+
+is_major_degrees_awarded &lt;- is_major_degrees_awarded[-211, ]
+
+is_major_degrees_awarded$`Student Division Code` = NULL
+is_major_degrees_awarded$`Student Department Code` = NULL
+is_major_degrees_awarded$`AW - Major Count` = NULL
+is_major_degrees_awarded$`Cohort Term` = NULL
+
+# View the result
+head(is_major_degrees_awarded)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+##   `Student ID` `Term Code` `Degree Type` Degree Semesters to Degree …¹ `Major 1`
+##   &lt;chr&gt;        &lt;chr&gt;       &lt;chr&gt;         &lt;chr&gt;                   &lt;dbl&gt; &lt;chr&gt;    
+## 1 8183142      202520      Bachelor      B.S. …                      8 Informat…
+## 2 8185339      202520      Bachelor      B.S. …                      8 Entrepre…
+## 3 8185339      202520      Bachelor      B.S. …                      8 Entrepre…
+## 4 8188789      202520      Bachelor      B.S. …                      8 Informat…
+## 5 8189765      202520      Bachelor      B.S. …                      8 Informat…
+## 6 8190053      202520      Bachelor      B.S. …                      6 Informat…
+## # ℹ abbreviated name: ¹​`Semesters to Degree Average`
+## # ℹ 1 more variable: `Major 2` &lt;chr&gt;</code></pre>
+<pre class="r"><code>value_counts &lt;- table(is_major_degrees_awarded$`Semesters to Degree Average`)
+
+# Print the value counts
+print(value_counts)</code></pre>
+<pre><code>## 
+##   1   6   7   8   9  10 
+##   1   5  14 221   2   5</code></pre>
+<pre class="r"><code>write.csv(is_major_degrees_awarded, &quot;data-clean/ISDegrees.csv&quot;)</code></pre>
 </div>
 </div>
 
