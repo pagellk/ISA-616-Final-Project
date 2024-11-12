@@ -452,6 +452,22 @@ head(BA_Majors)</code></pre>
 <pre><code>## [1] &quot;The number of rows is  4638&quot;</code></pre>
 <pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique((BA_Majors$`Student ID`))))</code></pre>
 <pre><code>## [1] &quot;The number of unique students is  834&quot;</code></pre>
+<pre class="r"><code>BA_Majors$`Major 4` = NULL
+BA_Majors$`Major 5` = NULL
+BA_Majors$`Major 6` = NULL
+
+head(BA_Majors)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+## # Groups:   Student ID [6]
+##   `Student ID` `Cohort Term` `Term Code` `Enrolled Student Count` `Major 1`
+##          &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;                          &lt;dbl&gt; &lt;chr&gt;    
+## 1      8023864 202510        202510                             1 BA Major 
+## 2      8024720 202510        202510                             1 BA Major 
+## 3      8026176 202510        202510                             1 BA Major 
+## 4      8031298 202510        202510                             1 BA Major 
+## 5      8034088 202510        202510                             1 BA Major 
+## 6      8035324 202510        202510                             1 BA Major 
+## # ℹ 2 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;</code></pre>
 <pre class="r"><code>write.csv(BA_Majors,&quot;data-clean/BA_Majors.csv&quot;)</code></pre>
 </div>
 <div id="loading-grades" class="section level3">
@@ -633,6 +649,22 @@ head(IS_Majors)</code></pre>
 <pre><code>## [1] &quot;The number of rows is  1756&quot;</code></pre>
 <pre class="r"><code>paste(&quot;The number of unique students is &quot;,length(unique((IS_Majors$`Student ID`))))</code></pre>
 <pre><code>## [1] &quot;The number of unique students is  237&quot;</code></pre>
+<pre class="r"><code>IS_Majors$`Major 4` = NULL
+IS_Majors$`Major 5` = NULL
+IS_Majors$`Major 6` = NULL
+
+head(IS_Majors)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+## # Groups:   Student ID [3]
+##   `Student ID` `Cohort Term` `Term Code` `Enrolled Student Count` `Major 1`     
+##          &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;                          &lt;dbl&gt; &lt;chr&gt;         
+## 1      8098858 202410        202410                             1 IS Major      
+## 2      8098858 202410        202420                             1 IS Major      
+## 3      8108061 202410        202410                             1 IS Major      
+## 4      8108061 202410        202420                             1 IS Major      
+## 5      8108061 202410        202510                             1 IS Major      
+## 6      8109444 202410        202410                             1 Cybersecurity…
+## # ℹ 2 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;</code></pre>
 <pre class="r"><code>write.csv(IS_Majors,&quot;data-clean/IS_Majors.csv&quot;)</code></pre>
 </div>
 <div id="loading-grades-1" class="section level3">
@@ -726,7 +758,7 @@ paste(&quot;The number of unique students is &quot;,length(unique(is_major_crhr$
 ## 6      8109444 202410                            15                           53
 ## # ℹ abbreviated name: ¹​`Term UG Overall Earned CrHr (MU and Non-MU)`
 ## # ℹ 1 more variable: `Cum UG Overall Earned CrHr (MU and Non-MU)` &lt;dbl&gt;</code></pre>
-<pre><code>## # A tibble: 6 × 21
+<pre><code>## # A tibble: 6 × 18
 ## # Groups:   Student ID [6]
 ##   `Student ID` `Cohort Term` `Term Code.x` `Enrolled Student Count` `Major 1`
 ##          &lt;dbl&gt; &lt;chr&gt;         &lt;chr&gt;                            &lt;dbl&gt; &lt;chr&gt;    
@@ -736,8 +768,7 @@ paste(&quot;The number of unique students is &quot;,length(unique(is_major_crhr$
 ## 4      8031298 202510        202510                               1 BA Major 
 ## 5      8034088 202510        202510                               1 BA Major 
 ## 6      8035324 202510        202510                               1 BA Major 
-## # ℹ 16 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;, `Major 4` &lt;chr&gt;,
-## #   `Major 5` &lt;chr&gt;, `Major 6` &lt;chr&gt;, Gender &lt;chr&gt;,
+## # ℹ 13 more variables: `Major 2` &lt;chr&gt;, `Major 3` &lt;chr&gt;, Gender &lt;chr&gt;,
 ## #   `First Generation Indicator` &lt;chr&gt;, `Term Code.y` &lt;chr&gt;,
 ## #   `Term UG Crs GPA` &lt;dbl&gt;, `Cum UG Crs GPA` &lt;dbl&gt;, Course &lt;chr&gt;,
 ## #   `Term Code` &lt;chr&gt;, `Earned Academic Credit` &lt;chr&gt;,

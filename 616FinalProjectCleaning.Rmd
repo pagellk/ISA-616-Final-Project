@@ -81,6 +81,14 @@ head(BA_Majors)
 paste("The number of rows is ",nrow(BA_Majors))
 paste("The number of unique students is ",length(unique((BA_Majors$`Student ID`))))
 
+BA_Majors$`Major 4` = NULL
+BA_Majors$`Major 5` = NULL
+BA_Majors$`Major 6` = NULL
+
+head(BA_Majors)
+
+
+
 write.csv(BA_Majors,"data-clean/BA_Majors.csv")
 ```
 ### Loading Grades
@@ -198,6 +206,12 @@ IS_Majors=IS_Majors %>%
 head(IS_Majors)
 paste("The number of rows is ",nrow(IS_Majors))
 paste("The number of unique students is ",length(unique((IS_Majors$`Student ID`))))
+
+IS_Majors$`Major 4` = NULL
+IS_Majors$`Major 5` = NULL
+IS_Majors$`Major 6` = NULL
+
+head(IS_Majors)
 
 write.csv(IS_Majors,"data-clean/IS_Majors.csv")
 ```
