@@ -830,6 +830,134 @@ print(value_counts)</code></pre>
 ##   1   6   7   8   9  10 
 ##   1   5  14 221   2   5</code></pre>
 <pre class="r"><code>write.csv(is_major_degrees_awarded, &quot;data-clean/ISDegrees.csv&quot;)</code></pre>
+<pre class="r"><code>## BA Majors
+BA_Majors = read.csv(&#39;data-clean/BA_Majors.csv&#39;)
+head(BA_Majors)</code></pre>
+<pre><code>##   X Student.ID Cohort.Term Term.Code Enrolled.Student.Count  Major.1 Major.2
+## 1 1    8023864      202510    202510                      1 BA Major    &lt;NA&gt;
+## 2 2    8024720      202510    202510                      1 BA Major    &lt;NA&gt;
+## 3 3    8026176      202510    202510                      1 BA Major    &lt;NA&gt;
+## 4 4    8031298      202510    202510                      1 BA Major    &lt;NA&gt;
+## 5 5    8034088      202510    202510                      1 BA Major    &lt;NA&gt;
+## 6 6    8035324      202510    202510                      1 BA Major    &lt;NA&gt;
+##   Major.3
+## 1    &lt;NA&gt;
+## 2    &lt;NA&gt;
+## 3    &lt;NA&gt;
+## 4    &lt;NA&gt;
+## 5    &lt;NA&gt;
+## 6    &lt;NA&gt;</code></pre>
+<pre class="r"><code>BA_Majors &lt;- BA_Majors |&gt;
+  dplyr::select(-c(&#39;X&#39;, &#39;Enrolled.Student.Count&#39;))
+
+BA_Majors &lt;- BA_Majors |&gt;
+  dplyr::mutate(
+    `Major.1` = tidyr::replace_na(`Major.1`, &#39;None&#39;),
+    `Major.2` = tidyr::replace_na(`Major.2`, &#39;None&#39;),
+    `Major.3` = tidyr::replace_na(`Major.3`, &#39;None&#39;)
+  )
+
+head(BA_Majors)</code></pre>
+<pre><code>##   Student.ID Cohort.Term Term.Code  Major.1 Major.2 Major.3
+## 1    8023864      202510    202510 BA Major    None    None
+## 2    8024720      202510    202510 BA Major    None    None
+## 3    8026176      202510    202510 BA Major    None    None
+## 4    8031298      202510    202510 BA Major    None    None
+## 5    8034088      202510    202510 BA Major    None    None
+## 6    8035324      202510    202510 BA Major    None    None</code></pre>
+<pre class="r"><code>## merge degrees and majors together
+BA &lt;- dplyr::left_join(BA_Majors, BA_Degrees, by = &#39;Student.ID&#39;)
+
+## drop columns
+BA &lt;- BA |&gt;
+  dplyr::select(-c(&#39;Term.Code.y&#39;, &#39;Semesters.to.Degree.Average&#39;))
+## rename columm
+BA &lt;- BA |&gt;
+  dplyr::rename(`Term.Code` = `Term.Code.x`)
+
+## Fill NA values in graduated. Graduated will equal 1 if anywhere in the dataset for a student id they have graduated. It will be 0 if not.
+
+# Determine if each student has graduated
+graduated_status &lt;- BA |&gt;
+  dplyr::group_by(`Student.ID`) |&gt;
+  dplyr::summarise(Graduated = max(Graduated, na.rm = TRUE)) |&gt;
+  dplyr::mutate(Graduated = ifelse(Graduated == -Inf, NA_real_, Graduated))
+
+# Fill NA values in &#39;Graduated&#39; based on Student ID
+BA &lt;- BA |&gt;
+  dplyr::left_join(graduated_status, by = &quot;Student.ID&quot;, suffix = c(&quot;&quot;, &quot;.y&quot;)) |&gt;
+  dplyr::mutate(Graduated = ifelse(is.na(Graduated.y), 0, Graduated.y)) |&gt;
+  dplyr::select(-Graduated.y)
+
+head(BA)</code></pre>
+<pre><code>##   Student.ID Cohort.Term Term.Code  Major.1 Major.2 Major.3 Graduated
+## 1    8023864      202510    202510 BA Major    None    None         0
+## 2    8024720      202510    202510 BA Major    None    None         0
+## 3    8026176      202510    202510 BA Major    None    None         0
+## 4    8031298      202510    202510 BA Major    None    None         0
+## 5    8034088      202510    202510 BA Major    None    None         0
+## 6    8035324      202510    202510 BA Major    None    None         0</code></pre>
+<pre><code>##   Student.ID Term.Code Cum.Credit.Hrs
+## 1    8023864    202510              0
+## 2    8024720    202510              0
+## 3    8024720    202520              0
+## 4    8026176    202510              3
+## 5    8034088    202510              7
+## 6    8035324    202510              4</code></pre>
+<pre class="r"><code>## merge credit hours with BA dataset
+BA &lt;- dplyr::left_join(BA, BA_Credit_Hours, by = c(&quot;Student.ID&quot;, &quot;Term.Code&quot;))
+BA &lt;- BA |&gt;
+  dplyr::arrange(`Student.ID`)
+
+## filter out error
+BA &lt;- BA |&gt;
+  dplyr::filter(`Major.1` != &quot;None&quot;)
+
+## replace NA Credit Hrs with 0
+BA &lt;- BA |&gt;
+  dplyr::mutate_all(~ tidyr::replace_na(., 0))
+head(BA)</code></pre>
+<pre><code>##   Student.ID Cohort.Term Term.Code  Major.1 Major.2 Major.3 Graduated
+## 1    8023864      202510    202510 BA Major    None    None         0
+## 2    8024720      202510    202510 BA Major    None    None         0
+## 3    8026176      202510    202510 BA Major    None    None         0
+## 4    8031298      202510    202510 BA Major    None    None         0
+## 5    8034088      202510    202510 BA Major    None    None         0
+## 6    8035324      202510    202510 BA Major    None    None         0
+##   Cum.Credit.Hrs
+## 1              0
+## 2              0
+## 3              3
+## 4              0
+## 5              7
+## 6              4</code></pre>
+<pre><code>##   Student.ID Term.Code Cum.UG.Crs.GPA
+## 1    8023864    202510             NA
+## 2    8024720    202510             NA
+## 3    8026176    202510             NA
+## 4    8031298    202510             NA
+## 5    8034088    202510             NA
+## 6    8035324    202510             NA</code></pre>
+<pre class="r"><code>## merge attributes and BA data set together
+BA &lt;- dplyr::left_join(BA, BA_Attributes, by = c(&quot;Student.ID&quot;, &quot;Term.Code&quot;))
+BA &lt;- BA |&gt;
+  dplyr::arrange(`Student.ID`)
+head(BA)</code></pre>
+<pre><code>##   Student.ID Cohort.Term Term.Code  Major.1 Major.2 Major.3 Graduated
+## 1    8023864      202510    202510 BA Major    None    None         0
+## 2    8024720      202510    202510 BA Major    None    None         0
+## 3    8026176      202510    202510 BA Major    None    None         0
+## 4    8031298      202510    202510 BA Major    None    None         0
+## 5    8034088      202510    202510 BA Major    None    None         0
+## 6    8035324      202510    202510 BA Major    None    None         0
+##   Cum.Credit.Hrs Cum.UG.Crs.GPA
+## 1              0             NA
+## 2              0             NA
+## 3              3             NA
+## 4              0             NA
+## 5              7             NA
+## 6              4             NA</code></pre>
+<pre class="r"><code>write.csv(BA, &quot;data-clean/BA_Final.csv&quot;)</code></pre>
 </div>
 </div>
 

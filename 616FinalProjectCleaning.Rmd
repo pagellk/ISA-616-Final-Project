@@ -304,7 +304,111 @@ print(value_counts)
 
 write.csv(is_major_degrees_awarded, "data-clean/ISDegrees.csv")
 ```
+```{r, echo=FALSE}
+## Merge BA Datasets together
 
+## BA Degrees
+BA_Degrees = read.csv('data-clean/BADegrees.csv')
+BA_Degrees <- BA_Degrees |>
+  dplyr::select(-c('X', 'Major.1', 'Major.2', 'Major.3', 'Degree.Type', 'Degree'))
+BA_Degrees <- BA_Degrees[complete.cases(BA_Degrees), ]
+BA_Degrees$Graduated <- ifelse(!is.na(BA_Degrees$`Semesters.to.Degree.Average`), 1, 0)
+BA_Degrees$`Student.ID` <- as.integer(BA_Degrees$`Student.ID`)
+
+```
+
+```{r}
+## BA Majors
+BA_Majors = read.csv('data-clean/BA_Majors.csv')
+head(BA_Majors)
+BA_Majors <- BA_Majors |>
+  dplyr::select(-c('X', 'Enrolled.Student.Count'))
+
+BA_Majors <- BA_Majors |>
+  dplyr::mutate(
+    `Major.1` = tidyr::replace_na(`Major.1`, 'None'),
+    `Major.2` = tidyr::replace_na(`Major.2`, 'None'),
+    `Major.3` = tidyr::replace_na(`Major.3`, 'None')
+  )
+
+head(BA_Majors)
+
+```
+```{r}
+## merge degrees and majors together
+BA <- dplyr::left_join(BA_Majors, BA_Degrees, by = 'Student.ID')
+
+## drop columns
+BA <- BA |>
+  dplyr::select(-c('Term.Code.y', 'Semesters.to.Degree.Average'))
+## rename columm
+BA <- BA |>
+  dplyr::rename(`Term.Code` = `Term.Code.x`)
+
+## Fill NA values in graduated. Graduated will equal 1 if anywhere in the dataset for a student id they have graduated. It will be 0 if not.
+
+# Determine if each student has graduated
+graduated_status <- BA |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarise(Graduated = max(Graduated, na.rm = TRUE)) |>
+  dplyr::mutate(Graduated = ifelse(Graduated == -Inf, NA_real_, Graduated))
+
+# Fill NA values in 'Graduated' based on Student ID
+BA <- BA |>
+  dplyr::left_join(graduated_status, by = "Student.ID", suffix = c("", ".y")) |>
+  dplyr::mutate(Graduated = ifelse(is.na(Graduated.y), 0, Graduated.y)) |>
+  dplyr::select(-Graduated.y)
+
+head(BA)
+```
+```{r, echo=FALSE}
+BA_Credit_Hours = read.csv('data-clean/BA_CreditHours.csv')
+# drop columns
+BA_Credit_Hours <- BA_Credit_Hours |>
+  dplyr::select(-c('X', 'Term.UG.MU.Earned.CrHr', 'Term.UG.Overall.Earned.CrHr..MU.and.Non.MU.'))
+# rename columns
+BA_Credit_Hours <- BA_Credit_Hours |>
+  dplyr::rename(`Cum.Credit.Hrs` = `Cum.UG.Overall.Earned.CrHr..MU.and.Non.MU.`)
+# fill na
+BA_Credit_Hours <- BA_Credit_Hours |>
+  dplyr::mutate(`Cum.Credit.Hrs` = tidyr::replace_na(`Cum.Credit.Hrs`, 0))
+head(BA_Credit_Hours)
+```
+```{r}
+## merge credit hours with BA dataset
+BA <- dplyr::left_join(BA, BA_Credit_Hours, by = c("Student.ID", "Term.Code"))
+BA <- BA |>
+  dplyr::arrange(`Student.ID`)
+
+## filter out error
+BA <- BA |>
+  dplyr::filter(`Major.1` != "None")
+
+## replace NA Credit Hrs with 0
+BA <- BA |>
+  dplyr::mutate_all(~ tidyr::replace_na(., 0))
+head(BA)
+```
+```{r, echo=FALSE}
+BA_Attributes = read.csv('data-clean/BA_Attributes.csv')
+# drop columns
+BA_Attributes <- BA_Attributes |>
+  dplyr::select(-c('X', 'Gender', 'First.Generation.Indicator', 'Term.UG.Crs.GPA'))
+
+## fill NA values
+BA_Attributes <- BA_Attributes |>
+  dplyr::mutate(`Cum.UG.Crs.GPA` = ifelse(is.na(`Cum.UG.Crs.GPA`), "NA", `Cum.UG.Crs.GPA`))
+head(BA_Attributes)
+```
+
+```{r}
+## merge attributes and BA data set together
+BA <- dplyr::left_join(BA, BA_Attributes, by = c("Student.ID", "Term.Code"))
+BA <- BA |>
+  dplyr::arrange(`Student.ID`)
+head(BA)
+write.csv(BA, "data-clean/BA_Final.csv")
+```
 
 
 
