@@ -830,6 +830,9 @@ print(value_counts)</code></pre>
 ##   1   6   7   8   9  10 
 ##   1   5  14 221   2   5</code></pre>
 <pre class="r"><code>write.csv(is_major_degrees_awarded, &quot;data-clean/ISDegrees.csv&quot;)</code></pre>
+</div>
+<div id="merge-datasets-together" class="section level2">
+<h2>Merge Datasets Together</h2>
 <pre class="r"><code>## BA Majors
 BA_Majors = read.csv(&#39;data-clean/BA_Majors.csv&#39;)
 head(BA_Majors)</code></pre>
@@ -958,6 +961,78 @@ head(BA)</code></pre>
 ## 5              7             NA
 ## 6              4             NA</code></pre>
 <pre class="r"><code>write.csv(BA, &quot;data-clean/BA_Final.csv&quot;)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    248 obs. of  4 variables:
+##  $ Student.ID                 : int  8183142 8185339 8185339 8188789 8189765 8190053 8190645 8190732 8193517 8194067 ...
+##  $ Term.Code                  : int  202520 202520 202520 202520 202520 202520 202520 202520 202520 202520 ...
+##  $ Semesters.to.Degree.Average: int  8 8 8 8 8 6 8 8 8 8 ...
+##  $ Graduated                  : num  1 1 1 1 1 1 1 1 1 1 ...</code></pre>
+<pre><code>##   Student.ID Term.Code Cum.Credit.Hours
+## 1    8098858    202410               16
+## 2    8098858    202420               31
+## 3    8108061    202410               39
+## 4    8108061    202420               53
+## 5    8108061    202510               53
+## 6    8109444    202410               53</code></pre>
+<pre><code>## &#39;data.frame&#39;:    1756 obs. of  6 variables:
+##  $ Student.ID : int  8098858 8098858 8108061 8108061 8108061 8109444 8109444 8109444 8110017 8110017 ...
+##  $ Cohort.Term: int  202410 202410 202410 202410 202410 202410 202410 202410 202410 202410 ...
+##  $ Term.Code  : int  202410 202420 202410 202420 202510 202410 202420 202510 202410 202420 ...
+##  $ Major.1    : chr  &quot;IS Major&quot; &quot;IS Major&quot; &quot;IS Major&quot; &quot;IS Major&quot; ...
+##  $ Major.2    : chr  &quot;None&quot; &quot;None&quot; &quot;None&quot; &quot;None&quot; ...
+##  $ Major.3    : chr  &quot;None&quot; &quot;None&quot; &quot;None&quot; &quot;None&quot; ...</code></pre>
+<pre><code>##   Student.ID Cohort.Term Term.Code                 Major.1 Major.2 Major.3
+## 1    8098858      202410    202410                IS Major    None    None
+## 2    8098858      202410    202420                IS Major    None    None
+## 3    8108061      202410    202410                IS Major    None    None
+## 4    8108061      202410    202420                IS Major    None    None
+## 5    8108061      202410    202510                IS Major    None    None
+## 6    8109444      202410    202410 Cybersecurity Mgt Major    None    None
+##   Graduated
+## 1         0
+## 2         0
+## 3         0
+## 4         0
+## 5         0
+## 6         0</code></pre>
+<pre class="r"><code>IS &lt;- dplyr::left_join(IS, is_credithours, by = c(&quot;Student.ID&quot;, &quot;Term.Code&quot;))
+IS &lt;- IS |&gt;
+  dplyr::filter(`Major.1` != &quot;None&quot;)
+head(IS)</code></pre>
+<pre><code>##   Student.ID Cohort.Term Term.Code                 Major.1 Major.2 Major.3
+## 1    8098858      202410    202410                IS Major    None    None
+## 2    8098858      202410    202420                IS Major    None    None
+## 3    8108061      202410    202410                IS Major    None    None
+## 4    8108061      202410    202420                IS Major    None    None
+## 5    8108061      202410    202510                IS Major    None    None
+## 6    8109444      202410    202410 Cybersecurity Mgt Major    None    None
+##   Graduated Cum.Credit.Hours
+## 1         0               16
+## 2         0               31
+## 3         0               39
+## 4         0               53
+## 5         0               53
+## 6         0               53</code></pre>
+<pre><code>##   Student.ID Term.Code Cum.UG.Crs.GPA
+## 1    8098858    202410           2.52
+## 2    8098858    202420           2.40
+## 3    8108061    202410           3.86
+## 4    8108061    202420           3.63
+## 5    8108061    202510           3.63
+## 6    8109444    202410           3.82</code></pre>
+<pre><code>##   Student.ID Cohort.Term Term.Code                 Major.1 Major.2 Major.3
+## 1    8098858      202410    202410                IS Major    None    None
+## 2    8098858      202410    202420                IS Major    None    None
+## 3    8108061      202410    202410                IS Major    None    None
+## 4    8108061      202410    202420                IS Major    None    None
+## 5    8108061      202410    202510                IS Major    None    None
+## 6    8109444      202410    202410 Cybersecurity Mgt Major    None    None
+##   Graduated Cum.Credit.Hours Cum.UG.Crs.GPA
+## 1         0               16           2.52
+## 2         0               31           2.40
+## 3         0               39           3.86
+## 4         0               53           3.63
+## 5         0               53           3.63
+## 6         0               53           3.82</code></pre>
 </div>
 </div>
 
