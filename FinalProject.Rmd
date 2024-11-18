@@ -144,4 +144,46 @@ This report will be submitted by 11:59pm on December 5th. This report will detai
 
 Another aspect of our project that we will deliver are our presentation slides, as well as our presentation. These will also be due by 11:59pm on December 5th, although our presentation may fall earlier. The goal of this presentation is to clearly articulate our findings to our audience and visualize the data in a way that is easy for someone with a non-technical background to understand.
 
+## Reproducible Data Analysis
+
+Along with our technical report and presentation, we will also submit a fully reproducible data analysis. This is so that as more students come through the department, this analysis will be able to rerun for new sets of students.
+
+# Analysis
+## BA Majors
+To begin our analysis, I am interested in looking at the raw counts of students enrolled in the BA major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have BA Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students.
+```{r, echo=FALSE}
+# Ensure dplyr is installed and loaded
+if(require(dplyr)==FALSE) install.packages("dplyr")
+
+# Load the dplyr package
+library(dplyr)
+
+BA = read.csv('data-clean/BA_Final.csv')
+result <- BA |>
+  dplyr::filter(`Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major") |>
+  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
+  dplyr::summarize(Num_Students = n_distinct(`Student.ID`), .groups = 'drop')
+
+
+# Display the reshaped table
+print(result)
+
+```
+## IS Majors
+To initially explore the IS Major dataset, I wanted to look at the raw counts of students enrolled in the IS major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have an IS Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students.
+```{r, echo=FALSE}
+IS = read.csv('data-clean/IS_Final.csv')
+result <- BA |>
+  dplyr::filter(
+    `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
+    `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
+    `Major.3` %in% c("IS Major", "Cybersecurity Mgt Major")
+  ) |>
+  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
+  dplyr::summarize(Num_Students = n_distinct(`Student.ID`), .groups = 'drop')
+
+
+# Display the reshaped table
+print(result)
+```
 

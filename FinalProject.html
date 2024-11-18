@@ -11,7 +11,7 @@
 
 <meta name="author" content="Andrew Edwards, Nick Oakley, and Lauren Pagel" />
 
-<meta name="date" content="2024-11-11" />
+<meta name="date" content="2024-11-17" />
 
 <title>ISA 616 Final Project</title>
 
@@ -1481,7 +1481,7 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">ISA 616 Final Project</h1>
 <h4 class="author">Andrew Edwards, Nick Oakley, and Lauren Pagel</h4>
-<h4 class="date">2024-11-11</h4>
+<h4 class="date">2024-11-17</h4>
 
 </div>
 
@@ -1720,6 +1720,77 @@ by 11:59pm on December 5th, although our presentation may fall earlier.
 The goal of this presentation is to clearly articulate our findings to
 our audience and visualize the data in a way that is easy for someone
 with a non-technical background to understand.</p>
+</div>
+<div id="reproducible-data-analysis" class="section level2">
+<h2>Reproducible Data Analysis</h2>
+<p>Along with our technical report and presentation, we will also submit
+a fully reproducible data analysis. This is so that as more students
+come through the department, this analysis will be able to rerun for new
+sets of students.</p>
+</div>
+</div>
+<div id="analysis" class="section level1">
+<h1>Analysis</h1>
+<div id="ba-majors" class="section level2">
+<h2>BA Majors</h2>
+<p>To begin our analysis, I am interested in looking at the raw counts
+of students enrolled in the BA major across different cohort terms and
+term codes in which they are enrolled at Miami. This code will filter my
+table for students who have BA Major indicated for at least one of their
+majors across different semesters for students in a particular cohort
+term. Below is our code output. Moving forward with analysis, I would be
+interested in showing how the number of students who graduated each
+semester could be implemented with this as we work to reclassify
+students.</p>
+<pre><code>## Loading required package: dplyr</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre><code>## # A tibble: 76 × 3
+##    Cohort.Term Term.Code Num_Students
+##          &lt;int&gt;     &lt;int&gt;        &lt;int&gt;
+##  1      201510    201520            2
+##  2      201510    201610            2
+##  3      201510    201620            2
+##  4      201510    201710            2
+##  5      201510    201720            2
+##  6      201510    201810            2
+##  7      201510    201820            2
+##  8      201610    201710            1
+##  9      201610    201720            2
+## 10      201610    201810            2
+## # ℹ 66 more rows</code></pre>
+</div>
+<div id="is-majors" class="section level2">
+<h2>IS Majors</h2>
+<p>To initially explore the IS Major dataset, I wanted to look at the
+raw counts of students enrolled in the IS major across different cohort
+terms and term codes in which they are enrolled at Miami. This code will
+filter my table for students who have an IS Major indicated for at least
+one of their majors across different semesters for students in a
+particular cohort term. Below is our code output. Moving forward with
+analysis, I would be interested in showing how the number of students
+who graduated each semester could be implemented with this as we work to
+reclassify students.</p>
+<pre><code>## # A tibble: 44 × 3
+##    Cohort.Term Term.Code Num_Students
+##          &lt;int&gt;     &lt;int&gt;        &lt;int&gt;
+##  1      201810    201820            1
+##  2      201810    201910            6
+##  3      201810    201920            9
+##  4      201810    202010            8
+##  5      201810    202020            8
+##  6      201810    202110            9
+##  7      201810    202120            9
+##  8      201810    202210            1
+##  9      201810    202220            1
+## 10      201910    201910            2
+## # ℹ 34 more rows</code></pre>
 </div>
 </div>
 
