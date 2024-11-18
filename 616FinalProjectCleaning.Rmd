@@ -260,7 +260,7 @@ write.csv(is_major_crhr, "data-clean/IS_CreditHours.csv")
 ```
 
 I will now clean the major degrees awared file for IS Majors. One field that is of particular interest to me is how many semesters it took a student to graduate, which can be displayed by the average of that field below. We found that, overwhelmingly, it took students 8 semester of coursework at Miami before they graduated. This provides our team with the valuable insight that graduation is likely better shown by the number of semesters of enrollment as opposed to number of credit hours completed.
-```{r}
+```{r, echo=FALSE}
 is_major_degrees_awarded = read_excel('IS Major Students - Degrees Awarded (1).xlsx')
 
 is_major_degrees_awarded = is_major_degrees_awarded %>% 
@@ -294,6 +294,11 @@ is_major_degrees_awarded$`Student Department Code` = NULL
 is_major_degrees_awarded$`AW - Major Count` = NULL
 is_major_degrees_awarded$`Cohort Term` = NULL
 
+is_major_degrees_awarded <- is_major_degrees_awarded |>
+  dplyr::rename(
+    Term.Code.Graduated = `Term Code`
+  )
+
 # View the result
 head(is_major_degrees_awarded)
 
@@ -313,8 +318,11 @@ BA_Degrees = read.csv('data-clean/BADegrees.csv')
 BA_Degrees <- BA_Degrees |>
   dplyr::select(-c('X', 'Major.1', 'Major.2', 'Major.3', 'Degree.Type', 'Degree'))
 BA_Degrees <- BA_Degrees[complete.cases(BA_Degrees), ]
-BA_Degrees$Graduated <- ifelse(!is.na(BA_Degrees$`Semesters.to.Degree.Average`), 1, 0)
 BA_Degrees$`Student.ID` <- as.integer(BA_Degrees$`Student.ID`)
+## rename columm
+BA_Degrees <- BA_Degrees |>
+  dplyr::rename(`Term.Code.Graduated` = `Term.Code`)
+head(BA_Degrees)
 
 ```
 
@@ -338,27 +346,21 @@ head(BA_Majors)
 ```{r}
 ## merge degrees and majors together
 BA <- dplyr::left_join(BA_Majors, BA_Degrees, by = 'Student.ID')
-
-## drop columns
 BA <- BA |>
-  dplyr::select(-c('Term.Code.y', 'Semesters.to.Degree.Average'))
-## rename columm
-BA <- BA |>
-  dplyr::rename(`Term.Code` = `Term.Code.x`)
+  dplyr::select(-c('Semesters.to.Degree.Average'))
 
-## Fill NA values in graduated. Graduated will equal 1 if anywhere in the dataset for a student id they have graduated. It will be 0 if not.
-
-# Determine if each student has graduated
-graduated_status <- BA |>
+# Determine the Term.Code.Graduated for each Student.ID
+graduation_info <- BA |>
   dplyr::group_by(`Student.ID`) |>
-  dplyr::summarise(Graduated = max(Graduated, na.rm = TRUE)) |>
-  dplyr::mutate(Graduated = ifelse(Graduated == -Inf, NA_real_, Graduated))
+  dplyr::summarize(Graduated_Term = dplyr::first(na.omit(`Term.Code.Graduated`)), .groups = 'drop')
 
-# Fill NA values in 'Graduated' based on Student ID
+# Fill NA values with the Term.Code.Graduated
 BA <- BA |>
-  dplyr::left_join(graduated_status, by = "Student.ID", suffix = c("", ".y")) |>
-  dplyr::mutate(Graduated = ifelse(is.na(Graduated.y), 0, Graduated.y)) |>
-  dplyr::select(-Graduated.y)
+  dplyr::left_join(graduation_info, by = "Student.ID") |>
+  dplyr::mutate(
+    `Term.Code.Graduated` = ifelse(is.na(`Term.Code.Graduated`), Graduated_Term, `Term.Code.Graduated`)
+  ) |>
+  dplyr::select(-Graduated_Term)
 
 head(BA)
 ```
@@ -419,10 +421,9 @@ is_degrees <- is_degrees |>
 is_degrees <- is_degrees |>
   dplyr::filter(`Student.ID` != "Rows 1 - 255 (All Rows)")
 is_degrees <- is_degrees |>
-  dplyr::mutate(
-    `Student.ID` = as.integer(`Student.ID`),
-    `Term.Code` = as.integer(`Term.Code`)
-  )
+  dplyr::mutate(Student.ID = as.integer(Student.ID))
+head(is_degrees)
+
 str(is_degrees)
 ```
 ```{r, echo=FALSE}
@@ -448,32 +449,29 @@ is_majors <- is_majors |>
     `Major.3` = "None"
   ))
 
-str(is_majors)
+head(is_majors)
 ```
 ```{r, echo=FALSE}
 IS <- dplyr::left_join(is_majors, is_degrees, by = "Student.ID")
 IS <- IS |>
-  dplyr::select(-c("Term.Code.y", "Semesters.to.Degree.Average"))
-IS <- IS |>
-  dplyr::rename(
-    `Term.Code` = `Term.Code.x`
-  )
+  dplyr::select(-c("Semesters.to.Degree.Average"))
 
-## Fill NA values in graduated. Graduated will equal 1 if anywhere in the dataset for a student id they have graduated. It will be 0 if not.
-
-# Determine if each student has graduated
-graduated_status <- IS |>
+# Determine the Term.Code.Graduated for each Student.ID
+graduation_info <- IS |>
   dplyr::group_by(`Student.ID`) |>
-  dplyr::summarise(Graduated = max(Graduated, na.rm = TRUE)) |>
-  dplyr::mutate(Graduated = ifelse(Graduated == -Inf, NA_real_, Graduated))
+  dplyr::summarize(Graduated_Term = dplyr::first(na.omit(`Term.Code.Graduated`)), .groups = 'drop')
 
-# Fill NA values in 'Graduated' based on Student ID
+# Fill NA values with the Term.Code.Graduated
 IS <- IS |>
-  dplyr::left_join(graduated_status, by = "Student.ID", suffix = c("", ".y")) |>
-  dplyr::mutate(Graduated = ifelse(is.na(Graduated.y), 0, Graduated.y)) |>
-  dplyr::select(-Graduated.y)
+  dplyr::left_join(graduation_info, by = "Student.ID") |>
+  dplyr::mutate(
+    `Term.Code.Graduated` = ifelse(is.na(`Term.Code.Graduated`), Graduated_Term, `Term.Code.Graduated`)
+  ) |>
+  dplyr::select(-Graduated_Term)
 
 head(IS)
+
+
 ```
 ```{r}
 IS <- dplyr::left_join(IS, is_credithours, by = c("Student.ID", "Term.Code"))

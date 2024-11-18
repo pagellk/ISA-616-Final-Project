@@ -30,9 +30,9 @@ library(dplyr)
 The ISA department has multiple classes of students each year. However, each year the number of students who graduate as seniors with their undergraduate does not align with the number of students in the major the previous year. Our primary goal with this project is to restructure and classify the students in a way that the department can accurately anticipate for the correct number of graduates the year before. Secondly, along with graduation, we have been asked to research the data and understand where these students are going, what are the leading causes of students leaving, and to redesign the classification metrics for grade level.
 
 # Research Questions
+* What is the best way to classify student grade levels? Number of credit hours? Full semesters at Miami?
 * Why are there fewer graduating seniors than estimated each year, and what is the cause for this drop-off?
   * Where are these students going?
-* What is the best way to classify student grade levels?
 * Are there indicators that can show when we estimate a student is about to graduate? We can look at number of credit hours, semesters at Miami, course performance and more.
 
 # Business Value Proposition
@@ -178,7 +178,7 @@ print(result)
 ```
 
 ### Graduation Counts for BA Majors
-This preliminary analysis shows the number of students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. That said, I will need to go back and look at this analysis, because I think something for students who graduated is off as there appears to be an abnormal number of students graduating this semester.
+This preliminary analysis shows the number of students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. 
 ```{r, echo =FALSE}
 # Determine the maximum Term.Code for each Student.ID to identify the graduation term
 graduation_terms <- BA |>
@@ -189,7 +189,7 @@ graduation_terms <- BA |>
 graduated_students <- BA |>
   dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
   dplyr::filter(
-    `Graduated` == 1,
+    `Term.Code.Graduated` == `Term.Code`,
     `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
   )
 
@@ -208,7 +208,7 @@ result
 To initially explore the IS Major dataset, I wanted to look at the raw counts of students enrolled in the IS major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have an IS Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students.
 ```{r, echo=FALSE}
 IS = read.csv('data-clean/IS_Final.csv')
-result <- BA |>
+result <- IS |>
   dplyr::filter(
     `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
     `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
@@ -223,7 +223,7 @@ print(result)
 ```
 
 ### Graduation Counts for IS Majors
-This preliminary analysis shows the number of IS Major students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. That said, I will need to go back and look at this analysis, because I think something for students who graduated is off as there appears to be an abnormal number of students graduating this semester.
+This preliminary analysis shows the number of IS Major students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. 
 ```{r, echo=FALSE}
 # Determine the maximum Term.Code for each Student.ID to identify the graduation term
 graduation_terms <- IS |>
@@ -234,7 +234,7 @@ graduation_terms <- IS |>
 graduated_students <- IS |>
   dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
   dplyr::filter(
-    `Graduated` == 1,
+    `Term.Code.Graduated` == `Term.Code`,
     `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
     `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
     `Major.3` %in% c("IS Major", "Cybersecurity Mgt Major")

@@ -1502,12 +1502,13 @@ metrics for grade level.</p>
 <div id="research-questions" class="section level1">
 <h1>Research Questions</h1>
 <ul>
+<li>What is the best way to classify student grade levels? Number of
+credit hours? Full semesters at Miami?</li>
 <li>Why are there fewer graduating seniors than estimated each year, and
 what is the cause for this drop-off?
 <ul>
 <li>Where are these students going?</li>
 </ul></li>
-<li>What is the best way to classify student grade levels?</li>
 <li>Are there indicators that can show when we estimate a student is
 about to graduate? We can look at number of credit hours, semesters at
 Miami, course performance and more.</li>
@@ -1762,24 +1763,21 @@ students.</p>
 <h3>Graduation Counts for BA Majors</h3>
 <p>This preliminary analysis shows the number of students from each
 cohort term who graduated each semester. From first looks, I notice that
-most students graduate during the spring of their senior year. That
-said, I will need to go back and look at this analysis, because I think
-something for students who graduated is off as there appears to be an
-abnormal number of students graduating this semester.</p>
-<pre><code>## # A tibble: 25 × 3
+most students graduate during the spring of their senior year.</p>
+<pre><code>## # A tibble: 24 × 3
 ##    Cohort.Term Term.Code Num_Graduated
 ##          &lt;int&gt;     &lt;int&gt;         &lt;int&gt;
 ##  1      201510    201820             2
 ##  2      201610    201920             2
 ##  3      201810    202020             2
-##  4      201810    202110             4
-##  5      201810    202120            50
-##  6      201810    202210             3
+##  4      201810    202110             3
+##  5      201810    202120            49
+##  6      201810    202210             2
 ##  7      201810    202310             1
 ##  8      201910    202120             1
-##  9      201910    202220            41
+##  9      201910    202220            40
 ## 10      201910    202310             5
-## # ℹ 15 more rows</code></pre>
+## # ℹ 14 more rows</code></pre>
 </div>
 </div>
 <div id="is-majors" class="section level2">
@@ -1795,49 +1793,45 @@ particular cohort term. Below is our code output. Moving forward with
 analysis, I would be interested in showing how the number of students
 who graduated each semester could be implemented with this as we work to
 reclassify students.</p>
-<pre><code>## # A tibble: 44 × 3
+<pre><code>## # A tibble: 53 × 3
 ##    Cohort.Term Term.Code Num_Students
 ##          &lt;int&gt;     &lt;int&gt;        &lt;int&gt;
-##  1      201810    201820            1
-##  2      201810    201910            6
-##  3      201810    201920            9
-##  4      201810    202010            8
-##  5      201810    202020            8
-##  6      201810    202110            9
-##  7      201810    202120            9
-##  8      201810    202210            1
-##  9      201810    202220            1
-## 10      201910    201910            2
-## # ℹ 34 more rows</code></pre>
+##  1      201810    201810            5
+##  2      201810    201820            7
+##  3      201810    201910           23
+##  4      201810    201920           35
+##  5      201810    202010           40
+##  6      201810    202020           41
+##  7      201810    202110           42
+##  8      201810    202120           41
+##  9      201810    202210            2
+## 10      201810    202220            2
+## # ℹ 43 more rows</code></pre>
 </div>
 <div id="graduation-counts-for-is-majors" class="section level3">
 <h3>Graduation Counts for IS Majors</h3>
 <p>This preliminary analysis shows the number of IS Major students from
 each cohort term who graduated each semester. From first looks, I notice
-that most students graduate during the spring of their senior year. That
-said, I will need to go back and look at this analysis, because I think
-something for students who graduated is off as there appears to be an
-abnormal number of students graduating this semester.</p>
-<pre><code>## # A tibble: 17 × 3
+that most students graduate during the spring of their senior year.</p>
+<pre><code>## # A tibble: 16 × 3
 ##    Cohort.Term Term.Code Num_Graduated
 ##          &lt;int&gt;     &lt;int&gt;         &lt;int&gt;
-##  1      201810    202110             2
+##  1      201810    202110             1
 ##  2      201810    202120            38
-##  3      201810    202220             2
+##  3      201810    202220             1
 ##  4      201910    202120             1
-##  5      201910    202220            32
+##  5      201910    202220            31
 ##  6      201910    202320             1
 ##  7      202010    202220             2
 ##  8      202010    202310             3
-##  9      202010    202320            38
+##  9      202010    202320            37
 ## 10      202010    202410             1
 ## 11      202010    202420             2
 ## 12      202110    202320             1
 ## 13      202110    202410             3
 ## 14      202110    202420            24
 ## 15      202210    202210             1
-## 16      202210    202510            25
-## 17      202310    202510             1</code></pre>
+## 16      202210    202510             1</code></pre>
 </div>
 </div>
 </div>
