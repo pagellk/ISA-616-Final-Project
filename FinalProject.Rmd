@@ -13,6 +13,17 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+if(require(pacman)==FALSE) install.packages("pacman")
+pacman::p_load(DataExplorer, # For explorer and cleaning data by visualizing missing values.
+               httr, # For downloading the data from the UCI
+               tidyverse, # For data manipulation
+               corrplot, # for heatmaps
+               DataExplorer, #for exploring data
+               skimr, # for nice summary of data
+               readxl, #to read Excel files
+               networkD3 # to create a Sankey Plot
+               ) # For creating dummy variables of categorical variables automatically.)
+library(dplyr)
 ```
 
 # Problem Statement
@@ -108,31 +119,31 @@ Do by the EOD on November 5th after class. Responsible stakeholder: Andrew Edwar
 Work on in class on November 5th and 7th, finish by November 10th. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 6. Merge Datasets Together - 
-Finish by November 12th. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Turned in with Project #2 Checkpoint on 11/17. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 7. Develop Metric to Count the Number of Students for Each Grade Level - 
-Due with the Checkpoint #2 materials on 11/17. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Work on during class on 11/19 and 11/21. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 8. Begin Building Visualizations - 
-Have drafts for checkpoint #2 due on 11/17. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Build out by the end of the week on 11/22. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 9. Draft of Final Presentation Slides - 
-Start by 11/17 for initial feedback for checkpoint #2. Have draft done by 11/26 before Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Have draft done by 11/26 before Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 10. Draft Technical Report - 
-Start by 11/17 for initial feedback for checkpoint #2. Have draft done by 11/26 before Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Have draft done by 11/26 before Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 11. Revise Technical Report - 
-Finish revisions by noon on 12/1. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Finish revisions by 12/3. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 12. Revise Final Presentation Slides - 
-Finish revisions by noon on 12/1. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Finish revisions by 12/3. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 13. Submit Final Slides and Technical Report - 
-Submit by EOD December 1st.  Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Submit by EOD December 5th. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 14. Deliver Final Presentation - 
-Present on December 3rd. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
+Present week of December 3rd. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
 # Deliverables
 
@@ -150,14 +161,10 @@ Along with our technical report and presentation, we will also submit a fully re
 
 # Analysis
 ## BA Majors
+
+### Counts of BA Students Across Cohort and Term Code
 To begin our analysis, I am interested in looking at the raw counts of students enrolled in the BA major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have BA Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students.
 ```{r, echo=FALSE}
-# Ensure dplyr is installed and loaded
-if(require(dplyr)==FALSE) install.packages("dplyr")
-
-# Load the dplyr package
-library(dplyr)
-
 BA = read.csv('data-clean/BA_Final.csv')
 result <- BA |>
   dplyr::filter(`Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major") |>
@@ -169,7 +176,35 @@ result <- BA |>
 print(result)
 
 ```
+
+### Graduation Counts for BA Majors
+This preliminary analysis shows the number of students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. That said, I will need to go back and look at this analysis, because I think something for students who graduated is off as there appears to be an abnormal number of students graduating this semester.
+```{r, echo =FALSE}
+# Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- BA |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
+
+# Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- BA |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    `Graduated` == 1,
+    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
+  )
+
+# Count the number of students who graduated each semester for each Term.Code
+result <- graduated_students |>
+  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
+
+result
+```
+
+
 ## IS Majors
+
+### Counts of IS Students Across Cohort and Term Code
 To initially explore the IS Major dataset, I wanted to look at the raw counts of students enrolled in the IS major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have an IS Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students.
 ```{r, echo=FALSE}
 IS = read.csv('data-clean/IS_Final.csv')
@@ -186,4 +221,41 @@ result <- BA |>
 # Display the reshaped table
 print(result)
 ```
+
+### Graduation Counts for IS Majors
+This preliminary analysis shows the number of IS Major students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. That said, I will need to go back and look at this analysis, because I think something for students who graduated is off as there appears to be an abnormal number of students graduating this semester.
+```{r, echo=FALSE}
+# Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- IS |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
+
+# Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- IS |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    `Graduated` == 1,
+    `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
+    `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
+    `Major.3` %in% c("IS Major", "Cybersecurity Mgt Major")
+  )
+
+# Count the number of students who graduated each semester for each Term.Code
+result <- graduated_students |>
+  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
+
+result
+```
+
+# Next Steps
+Now that we officially have our data sets cleaned and merged, we are ready to do some analyses on our data.
+
+In our current file, we have data grouped by Cohort Term for both our BA and IS data sets. A student’s cohort term indicates the first semester in which they started at Miami, while the Term Code indicates each semester that a student has been enrolled in the university.
+
+To further our analysis, we would like to track the number of students from each cohort who have graduated each semester. This will give us a better indication of if/when a student is about to graduate and may lead to a better classification system as to how we can group students by their grade level, leading to more valuable information for the department.
+
+In terms of classifying students by grade level, the BannerWeb system currently works to classify students in terms of number of cumulative credit hours. This has lead to some discrepancy in reporting, so our group is more interested in considering the number of semesters a student has completed at Miami when considering their classification in the system. With many students in FSB having to take business core classes that are usually not offered as a transfer credit option, this may be a better way to classify students. We can also consider aspects such as cumulative credit hours and GPA that are within our dataset to flag potentially high performing students who may be on the cusp of graduating early. Looking at these factors also may be useful to predict if a student may need to take an additional semester, or if they may be more likely to drop the major.
+
+In addition to a grade classification system, we will work to develop an effective way to visualize enrollment across the BA and IS departments. While developing the classification system is our top priority, we would like to also explore factors that may lead to a change in major for students to help the department better prioritize.
 

@@ -1673,33 +1673,32 @@ Pagel.</p></li>
 <li><p>Clean Dataset - Work on in class on November 5th and 7th, finish
 by November 10th. Responsible stakeholder: Andrew Edwards, Nick Oakley,
 Lauren Pagel.</p></li>
-<li><p>Merge Datasets Together - Finish by November 12th. Responsible
-stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.</p></li>
+<li><p>Merge Datasets Together - Turned in with Project #2 Checkpoint on
+11/17. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
+Pagel.</p></li>
 <li><p>Develop Metric to Count the Number of Students for Each Grade
-Level - Due with the Checkpoint #2 materials on 11/17. Responsible
+Level - Work on during class on 11/19 and 11/21. Responsible
 stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.</p></li>
-<li><p>Begin Building Visualizations - Have drafts for checkpoint #2 due
-on 11/17. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
+<li><p>Begin Building Visualizations - Build out by the end of the week
+on 11/22. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
 Pagel.</p></li>
-<li><p>Draft of Final Presentation Slides - Start by 11/17 for initial
-feedback for checkpoint #2. Have draft done by 11/26 before Thanksgiving
-Break. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
-Pagel.</p></li>
-<li><p>Draft Technical Report - Start by 11/17 for initial feedback for
-checkpoint #2. Have draft done by 11/26 before Thanksgiving Break.
+<li><p>Draft of Final Presentation Slides - Have draft done by 11/26
+before Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick
+Oakley, Lauren Pagel.</p></li>
+<li><p>Draft Technical Report - Have draft done by 11/26 before
+Thanksgiving Break. Responsible stakeholder: Andrew Edwards, Nick
+Oakley, Lauren Pagel.</p></li>
+<li><p>Revise Technical Report - Finish revisions by 12/3. Responsible
+stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.</p></li>
+<li><p>Revise Final Presentation Slides - Finish revisions by 12/3.
 Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
-Pagel.</p></li>
-<li><p>Revise Technical Report - Finish revisions by noon on 12/1.
-Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
-Pagel.</p></li>
-<li><p>Revise Final Presentation Slides - Finish revisions by noon on
-12/1. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
 Pagel.</p></li>
 <li><p>Submit Final Slides and Technical Report - Submit by EOD December
-1st. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
+5th. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
 Pagel.</p></li>
-<li><p>Deliver Final Presentation - Present on December 3rd. Responsible
-stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.</p></li>
+<li><p>Deliver Final Presentation - Present week of December 3rd.
+Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren
+Pagel.</p></li>
 </ol>
 </div>
 <div id="deliverables" class="section level1">
@@ -1733,6 +1732,8 @@ sets of students.</p>
 <h1>Analysis</h1>
 <div id="ba-majors" class="section level2">
 <h2>BA Majors</h2>
+<div id="counts-of-ba-students-across-cohort-and-term-code" class="section level3">
+<h3>Counts of BA Students Across Cohort and Term Code</h3>
 <p>To begin our analysis, I am interested in looking at the raw counts
 of students enrolled in the BA major across different cohort terms and
 term codes in which they are enrolled at Miami. This code will filter my
@@ -1742,15 +1743,6 @@ term. Below is our code output. Moving forward with analysis, I would be
 interested in showing how the number of students who graduated each
 semester could be implemented with this as we work to reclassify
 students.</p>
-<pre><code>## Loading required package: dplyr</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
 <pre><code>## # A tibble: 76 × 3
 ##    Cohort.Term Term.Code Num_Students
 ##          &lt;int&gt;     &lt;int&gt;        &lt;int&gt;
@@ -1766,8 +1758,34 @@ students.</p>
 ## 10      201610    201810            2
 ## # ℹ 66 more rows</code></pre>
 </div>
+<div id="graduation-counts-for-ba-majors" class="section level3">
+<h3>Graduation Counts for BA Majors</h3>
+<p>This preliminary analysis shows the number of students from each
+cohort term who graduated each semester. From first looks, I notice that
+most students graduate during the spring of their senior year. That
+said, I will need to go back and look at this analysis, because I think
+something for students who graduated is off as there appears to be an
+abnormal number of students graduating this semester.</p>
+<pre><code>## # A tibble: 25 × 3
+##    Cohort.Term Term.Code Num_Graduated
+##          &lt;int&gt;     &lt;int&gt;         &lt;int&gt;
+##  1      201510    201820             2
+##  2      201610    201920             2
+##  3      201810    202020             2
+##  4      201810    202110             4
+##  5      201810    202120            50
+##  6      201810    202210             3
+##  7      201810    202310             1
+##  8      201910    202120             1
+##  9      201910    202220            41
+## 10      201910    202310             5
+## # ℹ 15 more rows</code></pre>
+</div>
+</div>
 <div id="is-majors" class="section level2">
 <h2>IS Majors</h2>
+<div id="counts-of-is-students-across-cohort-and-term-code" class="section level3">
+<h3>Counts of IS Students Across Cohort and Term Code</h3>
 <p>To initially explore the IS Major dataset, I wanted to look at the
 raw counts of students enrolled in the IS major across different cohort
 terms and term codes in which they are enrolled at Miami. This code will
@@ -1792,6 +1810,70 @@ reclassify students.</p>
 ## 10      201910    201910            2
 ## # ℹ 34 more rows</code></pre>
 </div>
+<div id="graduation-counts-for-is-majors" class="section level3">
+<h3>Graduation Counts for IS Majors</h3>
+<p>This preliminary analysis shows the number of IS Major students from
+each cohort term who graduated each semester. From first looks, I notice
+that most students graduate during the spring of their senior year. That
+said, I will need to go back and look at this analysis, because I think
+something for students who graduated is off as there appears to be an
+abnormal number of students graduating this semester.</p>
+<pre><code>## # A tibble: 17 × 3
+##    Cohort.Term Term.Code Num_Graduated
+##          &lt;int&gt;     &lt;int&gt;         &lt;int&gt;
+##  1      201810    202110             2
+##  2      201810    202120            38
+##  3      201810    202220             2
+##  4      201910    202120             1
+##  5      201910    202220            32
+##  6      201910    202320             1
+##  7      202010    202220             2
+##  8      202010    202310             3
+##  9      202010    202320            38
+## 10      202010    202410             1
+## 11      202010    202420             2
+## 12      202110    202320             1
+## 13      202110    202410             3
+## 14      202110    202420            24
+## 15      202210    202210             1
+## 16      202210    202510            25
+## 17      202310    202510             1</code></pre>
+</div>
+</div>
+</div>
+<div id="next-steps" class="section level1">
+<h1>Next Steps</h1>
+<p>Now that we officially have our data sets cleaned and merged, we are
+ready to do some analyses on our data.</p>
+<p>In our current file, we have data grouped by Cohort Term for both our
+BA and IS data sets. A student’s cohort term indicates the first
+semester in which they started at Miami, while the Term Code indicates
+each semester that a student has been enrolled in the university.</p>
+<p>To further our analysis, we would like to track the number of
+students from each cohort who have graduated each semester. This will
+give us a better indication of if/when a student is about to graduate
+and may lead to a better classification system as to how we can group
+students by their grade level, leading to more valuable information for
+the department.</p>
+<p>In terms of classifying students by grade level, the BannerWeb system
+currently works to classify students in terms of number of cumulative
+credit hours. This has lead to some discrepancy in reporting, so our
+group is more interested in considering the number of semesters a
+student has completed at Miami when considering their classification in
+the system. With many students in FSB having to take business core
+classes that are usually not offered as a transfer credit option, this
+may be a better way to classify students. We can also consider aspects
+such as cumulative credit hours and GPA that are within our dataset to
+flag potentially high performing students who may be on the cusp of
+graduating early. Looking at these factors also may be useful to predict
+if a student may need to take an additional semester, or if they may be
+more likely to drop the major.</p>
+<p>In addition to a grade classification system, we will work to develop
+an effective way to visualize enrollment across the BA and IS
+departments. While developing the classification system is our top
+priority, we would like to also explore factors that may lead to a
+change in major for students to help the department better
+prioritize.</p>
 </div>
 
 
