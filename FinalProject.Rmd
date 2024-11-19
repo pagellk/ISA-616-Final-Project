@@ -200,7 +200,69 @@ result <- graduated_students |>
 
 result
 ```
+### Count of Student Grade Classification by Credit Hours
+```{r, echo=FALSE}
+BA |> 
+    dplyr::filter(
+    Major.1 == "BA Major" | 
+    Major.2 == "BA Major" | 
+    Major.3 == "BA Major"
+  ) |> 
+  dplyr::mutate(Classification = dplyr::case_when(
+    Cum.Credit.Hrs >= 0 & Cum.Credit.Hrs < 30 ~ "Freshman",
+    Cum.Credit.Hrs >= 30 & Cum.Credit.Hrs < 60 ~ "Sophomore",
+    Cum.Credit.Hrs >= 60 & Cum.Credit.Hrs < 90 ~ "Junior",
+    Cum.Credit.Hrs >= 90 ~ "Senior"
+  )) |> 
+  dplyr::group_by(Term.Code, Classification) |> 
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |> 
+  print()
+```
+### BA Graduates Trend
+```{r, echo=FALSE}
+# Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- BA |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
 
+# Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- BA |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    `Term.Code.Graduated` == `Term.Code`,
+    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
+  )
+
+# Count the number of students who graduated each semester for each Term.Code
+result <- graduated_students |>
+  dplyr::group_by(`Term.Code`) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
+
+# Create a mapping of Term.Code to academic year
+result <- result |> 
+  dplyr::mutate(Academic_Year = dplyr::case_when(
+    Term.Code %in% c(202510, 202520) ~ "2024-2025",
+    Term.Code %in% c(202410, 202420) ~ "2023-2024",
+    Term.Code %in% c(202310, 202320) ~ "2022-2023",
+    Term.Code %in% c(202210, 202220) ~ "2021-2022",
+    Term.Code %in% c(202110, 202120) ~ "2020-2021",
+    Term.Code %in% c(202010, 202020) ~ "2019-2020",
+    Term.Code %in% c(201910, 201920) ~ "2018-2019",
+    Term.Code %in% c(201810, 201820) ~ "2017-2018",
+    TRUE ~ as.character(Term.Code)  # Default case if needed
+  ))
+
+# Create a bar plot
+ggplot2::ggplot(result, ggplot2::aes(x = Academic_Year, y = Num_Graduated)) +
+  ggplot2::geom_bar(stat = "identity", fill = "skyblue") +
+  ggplot2::geom_text(ggplot2::aes(label = Num_Graduated), vjust = -0.3, size = 3.5) +
+  ggplot2::labs(
+    title = "Number of BA Major Graduates by Term Code",
+    x = "Academic Year",
+    y = "Number of Graduates"
+  ) +
+  ggplot2::theme_minimal()
+```
 
 ## IS Majors
 
@@ -243,6 +305,30 @@ graduated_students <- IS |>
 # Count the number of students who graduated each semester for each Term.Code
 result <- graduated_students |>
   dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
+
+result
+```
+## Graduation Check
+```{r, echo=FALSE}
+# Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- IS |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
+
+# Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- IS |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    `Term.Code.Graduated` == `Term.Code`,
+    `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
+    `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
+    `Major.3` %in% c("IS Major", "Cybersecurity Mgt Major")
+  )
+
+# Count the number of students who graduated each semester for each Term.Code
+result <- graduated_students |>
+  dplyr::group_by(`Term.Code`) |>
   dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
 
 result
