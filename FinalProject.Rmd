@@ -163,7 +163,7 @@ Along with our technical report and presentation, we will also submit a fully re
 ## BA Majors
 
 ### Counts of BA Students Across Cohort and Term Code
-To begin our analysis, I am interested in looking at the raw counts of students enrolled in the BA major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have BA Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students.
+To begin our analysis, I am interested in looking at the raw counts of students enrolled in the BA major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have BA Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students. In addition, numbers from this table could be used to track student movement through various majors, should they change their major away from Business Analytics.
 ```{r, echo=FALSE}
 BA = read.csv('data-clean/BA_Final.csv')
 result <- BA |>
@@ -177,8 +177,70 @@ print(result)
 
 ```
 
-### Graduation Counts for BA Majors
-This preliminary analysis shows the number of students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. 
+### Graduation Counts for BA Majors by Academic Year
+To provide ourselves with a good baseline before doing any further analysis, we want to generate an overarching graph that shows the number of students who have graduated for each academic year:
+```{r, echo=FALSE}
+# Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- BA |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
+
+# Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- BA |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    `Term.Code.Graduated` == `Term.Code`,
+    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
+  )
+
+# Count the number of students who graduated each semester for each Term.Code
+result <- graduated_students |>
+  dplyr::group_by(`Term.Code`) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
+
+# Create a mapping of Term.Code to academic year and term type
+result <- result |> 
+  dplyr::mutate(
+    Academic_Year = dplyr::case_when(
+      Term.Code %in% c(202510, 202520) ~ "2024-2025",
+      Term.Code %in% c(202410, 202420) ~ "2023-2024",
+      Term.Code %in% c(202310, 202320) ~ "2022-2023",
+      Term.Code %in% c(202210, 202220) ~ "2021-2022",
+      Term.Code %in% c(202110, 202120) ~ "2020-2021",
+      Term.Code %in% c(202010, 202020) ~ "2019-2020",
+      Term.Code %in% c(201910, 201920) ~ "2018-2019",
+      Term.Code %in% c(201810, 201820) ~ "2017-2018",
+      TRUE ~ as.character(Term.Code)  # Default case if needed
+    ),
+    Term_Type = dplyr::case_when(
+      stringr::str_ends(as.character(Term.Code), "10") ~ "Fall",
+      stringr::str_ends(as.character(Term.Code), "20") ~ "Spring",
+      TRUE ~ "Unknown"
+    )
+  ) |>
+  dplyr::mutate(Term_Type = factor(Term_Type, levels = c("Spring", "Fall")))
+
+# Create a stacked bar plot
+ggplot2::ggplot(result, ggplot2::aes(x = Academic_Year, y = Num_Graduated, fill = Term_Type)) + 
+  ggplot2::geom_bar(stat = "identity") + 
+  ggplot2::geom_text(ggplot2::aes(label = Num_Graduated), position = ggplot2::position_stack(vjust = 0.5), size = 3.5) + 
+  ggplot2::labs(
+    title = "Number of BA Major Graduates by Term Code",
+    x = "Academic Year",
+    y = "Number of Graduates",
+    fill = "Term Type"
+  ) + 
+  ggplot2::theme_minimal() + 
+  ggplot2::scale_fill_manual(values = c("Fall" = "#ADD8E6", "Spring" = "#0047AB")) + # Custom colors for Fall and Spring
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(hjust = 0.5)  # Center the title
+  )
+```
+
+This chart provides me with the number of graduation numbers the Business Analytics major has seen as a whole in the past 8 academic years. In general, here, I can see that most students with Business Analytics majors graduate in the spring semester as opposed to the fall. In addition, I am able to see how the department has improved as a whole in the past 8 academic years to increase the number of students who graduated with a degree in Business Analytics
+
+### Graduation Counts for BA Majors - by Cohort and Term Code
+This preliminary analysis shows the number of students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. This table, with the knowledge of the data we have, also indicates that there tends to be relatively few exceptions to this rule - as a significantly smaller number of students ten to graduate during the fall term, and few also graduate a full year early or late than their peers in their cohort term.
 ```{r, echo =FALSE}
 # Determine the maximum Term.Code for each Student.ID to identify the graduation term
 graduation_terms <- BA |>
@@ -200,7 +262,87 @@ result <- graduated_students |>
 
 result
 ```
+Let's more closely take at those who graduated last spring:
+
+```{r, echo=FALSE}
+# Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- BA |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
+
+# Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- BA |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    `Term.Code.Graduated` == `Term.Code`,
+    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
+  )
+
+# Count the number of students who graduated each semester for each Term.Code
+result <- graduated_students |>
+  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')|>
+  dplyr::filter(`Term.Code` == 202420)
+
+
+# Display the distribution in a formatted table with a colored header
+knitr::kable(result, col.names = c("Cohort Term", "Term Code", "Number of Graduates"), caption = "Spring 2024 Graduates") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
+```
+
+The term code of 202420 indicates to Spring Semester 2024. As shown by this data, we had 44 total students who graduated with a major in Business Analytics for this term, which matches the number from our graph previously. 
+
+What's interesting about this table is that it is broken down by the cohort term in which students started at Miami. We can see that most of the graduates came from Cohort Term 202110, which refers to students who started their college careers in the fall of 2020. If a student started their college career at this time and followed the traditional trajectory, we would expect them to graduate in the spring of 2024. While there are a couple of exceptions to this rule, showing students who may have taken a 5th or gap year, as well as one student who graduated a year early, most of the Business Analytics majors in the dataset appear to be graduating based on the amount of time they have spent at Miami.
+
+To validate this assumption, let's show the distribution of number of semesters it takes for students to graduate:
+```{r, echo=FALSE}
+# Identify students who have graduated
+graduated_students <- BA |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::filter(max(`Term.Code`) == `Term.Code.Graduated`) |>
+  dplyr::ungroup()
+
+# Count the number of unique Term.Code entries for each Student.ID
+semester_counts <- graduated_students |>
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Semester_Count = dplyr::n_distinct(`Term.Code`), .groups = 'drop')
+
+# Summarize the distribution of semester counts
+distribution <- semester_counts |>
+  dplyr::group_by(Semester_Count) |>
+  dplyr::summarize(Num_Students = dplyr::n(), .groups = 'drop')
+
+# Calculate the total number of students
+total_students <- sum(distribution$Num_Students)
+
+# Add a percentage column
+distribution <- distribution |>
+  dplyr::mutate(Percentage = (Num_Students / total_students) * 100)
+
+# Display the distribution in a formatted table with a colored header
+knitr::kable(distribution, col.names = c("Number of Semesters", "Number of Students", "% of Total"), caption = "Distribution of Semesters to Graduation") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
+```
+With the current distribution of values within our data set, I can see that 80.13% of graduated students with a major in Business Analytics took 8 semesters to complete their degree. The next closest percentage is 7 semesters, which comes in around 10.10%. While there are certainly cases of students taking more or less time to graduate with their degree, the distribution of this data set leads me to believe that we should proceed by classifying student grade levels based upon the number of semesters of enrollment.
+
 ### Count of Student Grade Classification by Credit Hours
+In our previous analyses, we were exploring the potential of classifying students in our database based upon the number of semesters they have been enrolled at Miami University. However, another potential area we may explore to classify students is based on the number of cumulative credit hours they have completed, whether at Miami University or elsewhere. Many students may have transfer credits through AP coursework from high school or from another college if they transferred. We suspect that BannerWeb is currently classifying students based on the number of cumulative credit hours they have completed currently, but have no inclination if that is true.
 ```{r, echo=FALSE}
 BA |> 
     dplyr::filter(
@@ -218,51 +360,45 @@ BA |>
   dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |> 
   print()
 ```
-### BA Graduates Trend
-```{r, echo=FALSE}
-# Determine the maximum Term.Code for each Student.ID to identify the graduation term
-graduation_terms <- BA |>
-  dplyr::group_by(`Student.ID`) |>
-  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
+When I classify a student's grade classification, assuming that on average each student completes 15 credit hours per semester, I start to notice a couple of problems. For starters, let's examine term code 202420, referencing Spring Semester 2024: 
 
-# Filter the original data to only include rows where the Term.Code is the graduation term
-graduated_students <- BA |>
-  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+```{r,echo=FALSE}
+result <- BA |>
   dplyr::filter(
-    `Term.Code.Graduated` == `Term.Code`,
-    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
-  )
+    (Major.1 == "BA Major" | 
+     Major.2 == "BA Major" | 
+     Major.3 == "BA Major") & 
+    Term.Code == 202420
+  ) |>
+  dplyr::mutate(Classification = dplyr::case_when(
+    Cum.Credit.Hrs >= 0 & Cum.Credit.Hrs < 30 ~ "Freshmen",
+    Cum.Credit.Hrs >= 30 & Cum.Credit.Hrs < 60 ~ "Sophomore",
+    Cum.Credit.Hrs >= 60 & Cum.Credit.Hrs < 90 ~ "Junior",
+    Cum.Credit.Hrs >= 90 ~ "Senior"
+  )) |>
+  dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior"))) |>
+  dplyr::group_by(Term.Code, Classification) |>
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |>
+  dplyr::arrange(Classification)
 
-# Count the number of students who graduated each semester for each Term.Code
-result <- graduated_students |>
-  dplyr::group_by(`Term.Code`) |>
-  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
-
-# Create a mapping of Term.Code to academic year
-result <- result |> 
-  dplyr::mutate(Academic_Year = dplyr::case_when(
-    Term.Code %in% c(202510, 202520) ~ "2024-2025",
-    Term.Code %in% c(202410, 202420) ~ "2023-2024",
-    Term.Code %in% c(202310, 202320) ~ "2022-2023",
-    Term.Code %in% c(202210, 202220) ~ "2021-2022",
-    Term.Code %in% c(202110, 202120) ~ "2020-2021",
-    Term.Code %in% c(202010, 202020) ~ "2019-2020",
-    Term.Code %in% c(201910, 201920) ~ "2018-2019",
-    Term.Code %in% c(201810, 201820) ~ "2017-2018",
-    TRUE ~ as.character(Term.Code)  # Default case if needed
-  ))
-
-# Create a bar plot
-ggplot2::ggplot(result, ggplot2::aes(x = Academic_Year, y = Num_Graduated)) +
-  ggplot2::geom_bar(stat = "identity", fill = "skyblue") +
-  ggplot2::geom_text(ggplot2::aes(label = Num_Graduated), vjust = -0.3, size = 3.5) +
-  ggplot2::labs(
-    title = "Number of BA Major Graduates by Term Code",
-    x = "Academic Year",
-    y = "Number of Graduates"
-  ) +
-  ggplot2::theme_minimal()
+# Display the result in a formatted table
+knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Students"), caption = "Student Classification for Spring 2024") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
+
+
+As I drill in to this specific term code, I notice that through a previous analysis, there were a total of 44 students who graduated this semester in total, yet my data with classified by credit hours says that there are 161 current seniors this semester. With an undergraduate program typically being 4 years long, we would expect to see the number of seniors for this semester to be equal, or close to, the total number of students graduating for that semester. From this, we are able to make two key conclusions: 
+
+1. The number of cumulative credit hours a student has completed does not reflect their status to graduate.
+2. While coming in with transfer credits is certainly beneficial for students, it is not always beneficial in helping them fill requirements for their particular degree program, which ultimately dictates their timeline to graduate.
+
+As a result, we will proceed in furthering our analyses by classifying student grade levels by the number of semesters they have completed at Miami.
+
 
 ## IS Majors
 
