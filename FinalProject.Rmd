@@ -1252,6 +1252,42 @@ From our analyses of students who have graduated behind schedule, we have three 
 2. Number of Credit Hours Taken per Semester - This may coincide with GPA, as a student will not get credit for a class if they do not pass it. However, the department should be closely monitoring these numbers to identify students who may be at risk of completing their Business Analytics degree late. Miami University considers a full time student to be one that takes 12 credit hours per semester, so students taking an average less than that may be on a path to fall behind.
 3. Changing Majors - The department also has data to track a student's progress through their time at Miami. Although this may not be as significant of a factor as GPA or Credit Hours, the department should consider closely watching students who change their major, particularly between academic divsions. These students will likely have an increased number of requirements asked of them because of the change, and when they change their major should also be considered as students who change their major later in their academic career will be less likely to finish on time. We will examine cases of students switching their majors below.
 
+### Tracking Where Students Go After BA
+```{r, echo=FALSE}
+# Step 1: Identify students who start with "BA Major"
+ba_initial_students <- BA |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::arrange(Term.Code) |>
+  dplyr::mutate(
+    initial_ba_major = any(
+      Major.1 == "BA Major" | Major.2 == "BA Major" | Major.3 == "BA Major"
+    )
+  ) |>
+  dplyr::filter(initial_ba_major)
+
+# Step 2: Track major changes
+major_switches <- ba_initial_students |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::mutate(
+    switched_major = dplyr::lead(Major.1) != "BA Major" &
+                     dplyr::lead(Major.2) != "BA Major" &
+                     dplyr::lead(Major.3) != "BA Major"
+  ) |>
+  dplyr::filter(switched_major)
+
+# Step 3: Count the number of students who switched
+major_count <- major_switches |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarise(
+    new_major = dplyr::first(dplyr::coalesce(Major.1, Major.2, Major.3)),
+    .groups = 'drop'
+  ) |>
+  dplyr::group_by(new_major) |>
+  dplyr::summarise(student_count = n(), .groups = 'drop')
+
+# Display the result
+print(major_count)
+```
 
 
 ## IS Majors
