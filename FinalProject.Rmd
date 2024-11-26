@@ -1250,45 +1250,7 @@ From our analyses of students who have graduated behind schedule, we have three 
 
 1. Cumulative GPA - Students who may be at risk for graduating later than their peers may be doing so because they failed a core class that they would hav to retake. The ISA department should consider flagging students with a cumulative GPA under a 3.0 during their time at Miami, as these students are at a significantly higher risk of graduating later than their peers in the program.
 2. Number of Credit Hours Taken per Semester - This may coincide with GPA, as a student will not get credit for a class if they do not pass it. However, the department should be closely monitoring these numbers to identify students who may be at risk of completing their Business Analytics degree late. Miami University considers a full time student to be one that takes 12 credit hours per semester, so students taking an average less than that may be on a path to fall behind.
-3. Changing Majors - The department also has data to track a student's progress through their time at Miami. Although this may not be as significant of a factor as GPA or Credit Hours, the department should consider closely watching students who change their major, particularly between academic divsions. These students will likely have an increased number of requirements asked of them because of the change, and when they change their major should also be considered as students who change their major later in their academic career will be less likely to finish on time. We will examine cases of students switching their majors below.
-
-### Tracking Where Students Go After BA
-```{r, echo=FALSE}
-
-# Step 1: Identify the most recent semester for each student
-most_recent_semester <- BA %>%
-  group_by(Student.ID) %>%
-  filter(Term.Code == max(Term.Code)) %>%
-  ungroup()
-
-# Step 2: Identify the most recent major (the last non-NA major in each row)
-recent_major <- most_recent_semester %>%
-  mutate(recent_major = coalesce(Major.1, Major.2, Major.3)) %>%
-  select(Student.ID, recent_major)
-
-# Step 3: Identify the student's prior majors by checking all three major columns for previous semesters
-previous_majors <- BA %>%
-  filter(!(Term.Code %in% most_recent_semester$Term.Code)) %>%
-  mutate(previous_major = coalesce(Major.1, Major.2, Major.3)) %>%
-  group_by(Student.ID) %>%
-  summarise(previous_major = last(previous_major)) %>%
-  ungroup()
-
-# Step 4: Identify students who switched from Business Analytics to another major
-switched_students <- previous_majors %>%
-  left_join(recent_major, by = "Student.ID") %>%
-  filter(previous_major == "BA Major" & recent_major != "BA Major")
-
-# Step 5: Count the number of students who switched majors
-switched_major_display <- switched_students %>%
-  group_by(recent_major) %>%
-  summarise(student_count = n(), .groups = 'drop') %>%
-  arrange(desc(student_count))
-
-# Display the result
-print(switched_major_display)
-
-```
+3. Changing Majors - The department also has data to track a student's progress through their time at Miami. Although this may not be as significant of a factor as GPA or Credit Hours, the department should consider closely watching students who change their major, particularly between academic divsions. These students will likely have an increased number of requirements asked of them because of the change, and when they change their major should also be considered as students who change their major later in their academic career will be less likely to finish on time. 
 
 
 ## IS Majors
