@@ -28,16 +28,18 @@ if(require(knitr) == FALSE) install.packages("knitr")
 if(require(kableExtra) == FALSE) install.packages("kableExtra")
 ```
 
-# Problem Statement
+# **Problem Statement**
 The ISA department has multiple classes of students each year. However, each year the number of students who graduate as seniors with their undergraduate does not align with the number of students in the major the previous year. Our primary goal with this project is to restructure and classify the students in a way that the department can accurately anticipate for the correct number of graduates the year before. Secondly, along with graduation, we have been asked to research the data and understand where these students are going, what are the leading causes of students leaving, and to redesign the classification metrics for grade level.
 
-# Research Questions
+
+# **Research Questions**
 * What is the best way to classify student grade levels? Number of credit hours? Full semesters at Miami?
 * Why are there fewer graduating seniors than estimated each year, and what is the cause for this drop-off?
   * Where are these students going?
 * Are there indicators that can show when we estimate a student is about to graduate? We can look at number of credit hours, semesters at Miami, course performance and more.
 
-# Business Value Proposition
+
+# **Business Value Proposition**
 ```{r, echo=FALSE}
 knitr::include_graphics('616 Final Project BVP.png')
 ```
@@ -103,7 +105,8 @@ Our solution will give the ISA department the information they need to better pl
 ### Better Classification System to Understand the Ages of Students and When They Are Likely to Graduate
 Our solution will provide the ISA department with a better system to classify students by their grade level so they can better understand and predict the number of students who will graduate from the department.
 
-# Timeline for Completion
+
+# **Timeline for Completion**
 
 1. Draft of Problem Statement - 
 Due with checkpoint 1 materials on November 4th. Responsible stakeholder: Nick Oakley.
@@ -147,7 +150,8 @@ Submit by EOD December 5th. Responsible stakeholder: Andrew Edwards, Nick Oakley
 14. Deliver Final Presentation - 
 Present week of December 3rd. Responsible stakeholder: Andrew Edwards, Nick Oakley, Lauren Pagel.
 
-# Deliverables
+
+# **Deliverables**
 
 ## Full Technical Report
 
@@ -161,11 +165,15 @@ Another aspect of our project that we will deliver are our presentation slides, 
 
 Along with our technical report and presentation, we will also submit a fully reproducible data analysis. This is so that as more students come through the department, this analysis will be able to rerun for new sets of students.
 
-# Analysis
-## BA Majors
+
+# **Analysis**
+
+## **BA Majors**
 
 ### Counts of BA Students Across Cohort and Term Code
+
 To begin our analysis, I am interested in looking at the raw counts of students enrolled in the BA major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have BA Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students. In addition, numbers from this table could be used to track student movement through various majors, should they change their major away from Business Analytics.
+
 ```{r, echo=FALSE}
 BA = read.csv('data-clean/BA_Final.csv')
 result <- BA |>
@@ -179,8 +187,11 @@ print(result)
 
 ```
 
+
 ### Graduation Counts for BA Majors by Academic Year
+
 To provide ourselves with a good baseline before doing any further analysis, we want to generate an overarching graph that shows the number of students who have graduated for each academic year:
+
 ```{r, echo=FALSE}
 # Determine the maximum Term.Code for each Student.ID to identify the graduation term
 graduation_terms <- BA |>
@@ -188,13 +199,12 @@ graduation_terms <- BA |>
   dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
 
 # Filter the original data to only include rows where the Term.Code is the graduation term
-graduated_students <- BA |> 
-  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |> 
+graduated_students <- BA |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
   dplyr::filter(
-    `Term.Code.Graduated` == `Term.Code`, 
-    (`Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major")
+    `Term.Code.Graduated` == `Term.Code`,
+    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
   )
-
 
 # Count the number of students who graduated each semester for each Term.Code
 result <- graduated_students |>
@@ -223,10 +233,6 @@ result <- result |>
   ) |>
   dplyr::mutate(Term_Type = factor(Term_Type, levels = c("Spring", "Fall")))
 
-# Filter the result to only include academic years from 2020-2021 onward
-result <- result |>
-  dplyr::filter(Academic_Year %in% c("2020-2021", "2021-2022", "2022-2023", "2023-2024", "2024-2025"))
-
 # Create a stacked bar plot
 ggplot2::ggplot(result, ggplot2::aes(x = Academic_Year, y = Num_Graduated, fill = Term_Type)) + 
   ggplot2::geom_bar(stat = "identity") + 
@@ -245,6 +251,7 @@ ggplot2::ggplot(result, ggplot2::aes(x = Academic_Year, y = Num_Graduated, fill 
 ```
 
 This chart provides me with the number of graduation numbers the Business Analytics major has seen as a whole in the past 8 academic years. In general, here, I can see that most students with Business Analytics majors graduate in the spring semester as opposed to the fall. In addition, I am able to see how the department has improved as a whole in the past 8 academic years to increase the number of students who graduated with a degree in Business Analytics
+
 
 ### Graduation Counts for BA Majors - by Cohort and Term Code
 This preliminary analysis shows the number of students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. This table, with the knowledge of the data we have, also indicates that there tends to be relatively few exceptions to this rule - as a significantly smaller number of students ten to graduate during the fall term, and few also graduate a full year early or late than their peers in their cohort term.
@@ -269,89 +276,40 @@ result <- graduated_students |>
 
 result
 ```
-```{r, echo=FALSE}
-# Step 1: Calculate the number of semesters completed before the term 202410
-BA_prior <- BA |>
-  dplyr::filter(Term.Code < 202410) |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::summarise(Semesters_Completed = dplyr::n_distinct(Term.Code), .groups = 'drop')
 
-# Step 2: Join with the original data to get the classification based on semesters completed before 202410
-result <- BA |>
-  dplyr::filter(
-    (Major.1 == "BA Major" | 
-     Major.2 == "BA Major" | 
-     Major.3 == "BA Major") & 
-    Term.Code == 202410
-  ) |>
-  dplyr::left_join(BA_prior, by = "Student.ID") |>
-  dplyr::mutate(Semesters_Completed = dplyr::if_else(is.na(Semesters_Completed), 0, Semesters_Completed)) |>
-  dplyr::mutate(Classification = dplyr::case_when(
-    Semesters_Completed < 2 ~ "Freshmen",
-    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
-    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
-    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
-    Semesters_Completed >= 8 ~ "Super Senior"
-  )) |>
-  dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
-  dplyr::group_by(Term.Code, Classification) |>
-  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID), .groups = 'drop') |>
-  dplyr::arrange(Classification)
-
-# Display the result in a formatted table
-if(require(knitr)==FALSE) install.packages("knitr")
-if(require(kableExtra)==FALSE) install.packages("kableExtra")
-
-knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Students"), caption = "Student Classification for Spring 2024") |>
-  kableExtra::kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"),
-    full_width = FALSE,
-    position = "center"
-  ) |>
-  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
-```
-
-Let's more closely take at those who graduated last spring:
+Let's more closely take a look at those who graduated last spring:
 
 ```{r, echo=FALSE}
-# Step 1: Determine the maximum Term.Code for each Student.ID to identify the graduation term
+# Determine the maximum Term.Code for each Student.ID to identify the graduation term
 graduation_terms <- BA |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::summarize(Max_Term_Code = max(Term.Code), .groups = 'drop')
+  dplyr::group_by(`Student.ID`) |>
+  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
 
-# Step 2: Filter the original data to only include rows where the Term.Code is the graduation term
+# Filter the original data to only include rows where the Term.Code is the graduation term
 graduated_students <- BA |>
   dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
   dplyr::filter(
-    Term.Code.Graduated %in% c(202410, 202420),
-    Major.1 == "BA Major" | Major.2 == "BA Major" | Major.3 == "BA Major"
+    `Term.Code.Graduated` == `Term.Code`,
+    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
   )
 
-# Step 3: Count the number of terms each student was enrolled in
-student_terms_count <- BA |>
-  dplyr::filter(Student.ID %in% graduated_students$Student.ID) |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::summarize(Num_Semesters = dplyr::n_distinct(Term.Code), .groups = 'drop')
-
-# Step 4: Join the number of semesters back to the graduated students data
-graduated_students <- graduated_students |>
-  dplyr::left_join(student_terms_count, by = "Student.ID")
-
-# Step 5: Count the number of graduates by the number of semesters
+# Count the number of students who graduated each semester for each Term.Code
 result <- graduated_students |>
-  dplyr::group_by(Num_Semesters) |>
-  dplyr::summarize(Num_Graduated = dplyr::n_distinct(Student.ID), .groups = 'drop')
+  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')|>
+  dplyr::filter(`Term.Code` == 202420)
+
 
 # Display the distribution in a formatted table with a colored header
-if(require(knitr)==FALSE) install.packages("knitr")
-if(require(kableExtra)==FALSE) install.packages("kableExtra")
-
-knitr::kable(result, col.names = c("Number of Semesters", "Number of Graduates"), caption = "Graduates by Number of Semesters for Academic Year 2023-2024") |>
+knitr::kable(result, col.names = c("Cohort Term", "Term Code", "Number of Graduates"), caption = "Spring 2024 Graduates") |>
   kableExtra::kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
     full_width = FALSE,
     position = "center"
   ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
 
@@ -360,6 +318,7 @@ The term code of 202420 indicates to Spring Semester 2024. As shown by this data
 What's interesting about this table is that it is broken down by the cohort term in which students started at Miami. We can see that most of the graduates came from Cohort Term 202110, which refers to students who started their college careers in the fall of 2020. If a student started their college career at this time and followed the traditional trajectory, we would expect them to graduate in the spring of 2024. While there are a couple of exceptions to this rule, showing students who may have taken a 5th or gap year, as well as one student who graduated a year early, most of the Business Analytics majors in the dataset appear to be graduating based on the amount of time they have spent at Miami.
 
 To validate this assumption, let's show the distribution of number of semesters it takes for students to graduate:
+
 ```{r, echo=FALSE}
 # Identify students who have graduated
 graduated_students <- BA |>
@@ -396,50 +355,54 @@ knitr::kable(distribution, col.names = c("Number of Semesters", "Number of Stude
   kableExtra::column_spec(3) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
+
 With the current distribution of values within our data set, I can see that 80.13% of graduated students with a major in Business Analytics took 8 semesters to complete their degree. The next closest percentage is 7 semesters, which comes in around 10.10%. While there are certainly cases of students taking more or less time to graduate with their degree, the distribution of this data set leads me to believe that we should proceed by classifying student grade levels based upon the number of semesters of enrollment.
+
 
 ### Count of Student Grade Classification by Credit Hours
 Before we examine the possibility of classifying students as per the number of semesters they have completed at Miami, let's first take a look into our data to see what the distribution of the number of credit hours students complete when they graduate.
 
 ```{r, echo=FALSE}
+
 # Step 1: Identify the maximum Term.Code for each student
-BA <- BA |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::mutate(max_term_code = max(Term.Code)) |>
-  dplyr::ungroup()
+BA <- BA %>%
+  group_by(Student.ID) %>%
+  mutate(max_term_code = max(Term.Code)) %>%
+  ungroup()
 
 # Step 2: Identify graduated students by comparing Term.Code.Graduated to their max Term.Code
-BA <- BA |>
-  dplyr::mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
+BA <- BA %>%
+  mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
 
 # Step 3: Filter for students who have graduated and capture their cumulative credit hours at graduation
-graduated_students <- BA |>
-  dplyr::filter(graduated == TRUE, Term.Code < 202510) |>
-  dplyr::select(Student.ID, Cum.Credit.Hrs)
+graduated_students <- BA %>%
+  filter(graduated == TRUE) %>%
+  select(Student.ID, Cum.Credit.Hrs)
 
 # Step 4: Visualize the distribution of cumulative credit hours at graduation
-if(require(ggplot2)==FALSE) install.packages("ggplot2")
+library(ggplot2)
 
 # Plot the distribution of cumulative credit hours at graduation
-ggplot2::ggplot(graduated_students, ggplot2::aes(x = Cum.Credit.Hrs)) +
-  ggplot2::geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
-  ggplot2::labs(
+ggplot(graduated_students, aes(x = Cum.Credit.Hrs)) +
+  geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
+  labs(
     title = "Distribution of Cumulative Credit Hours at Graduation",
     x = "Cumulative Credit Hours",
     y = "Number of Students"
   ) +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 As shown by this graph, students will graduate from Miami University with a wide variety of cumulative credit hours completed. This data could somewhat be impacted by how many transfer credits that a student has from high school, their number of majors and minors, and potentially if they want to be CPA eligible. Below we will detail some further statistics regarding those in our data set who have graduated with a Business Analytics Degree.
+
 ```{r, echo=FALSE}
-# Step 1: Filter for graduated students with valid credit hours and a Term.Code.Graduated of 202510 or higher
-graduated_students <- BA |>
-  dplyr::filter(graduated == TRUE, !is.na(Cum.Credit.Hrs), Term.Code.Graduated < 202510)
+# Step 1: Filter for graduated students and ensure non-missing credit hours
+graduated_students <- BA %>% 
+  filter(graduated == TRUE & !is.na(Cum.Credit.Hrs))  # Only include graduated students with valid credit hours
 
 # Step 2: Calculate the min, mean, and max number of Cum.Credit.Hrs for graduated students
-graduation_stats <- graduated_students |>
-  dplyr::summarise(
+graduation_stats <- graduated_students %>%
+  summarise(
     min_credit_hours = min(Cum.Credit.Hrs, na.rm = TRUE),
     mean_credit_hours = mean(Cum.Credit.Hrs, na.rm = TRUE),
     max_credit_hours = max(Cum.Credit.Hrs, na.rm = TRUE)
@@ -449,17 +412,16 @@ graduation_stats <- graduated_students |>
 colnames(graduation_stats) <- c("Minimum Credit Hours", "Mean Credit Hours", "Maximum Credit Hours")
 
 # Create the table with customized headers and styling
-if(require(knitr)==FALSE) install.packages("knitr")
-if(require(kableExtra)==FALSE) install.packages("kableExtra")
-
-knitr::kable(graduation_stats, caption = "Graduated Students' Cumulative Credit Hours Statistics") |>
+knitr::kable(graduation_stats, caption = "Graduated Students' Cumulative Credit Hours Statistics") %>%
+  # Apply bold styling to the header row and change background color
   kableExtra::kable_styling(
     bootstrap_options = c("striped", "hover", "responsive"),
-    full_width = FALSE
-  ) |>
-  kableExtra::column_spec(1:3, bold = TRUE) |>  # Make header titles bold
+    full_width = F
+  ) %>%
+  kableExtra::column_spec(1:3, bold = TRUE) %>%  # Make header titles bold
   kableExtra::row_spec(0, background = "#ADD8E6")  # Change background color of the header row (light blue)
 ```
+
 ```{r, echo=FALSE}
 # Assuming your data frame is named 'student_data'
 result <- BA |>
@@ -481,6 +443,7 @@ knitr::kable(result, caption = "Cumulative Credit Hours Statistics for First Ter
   kableExtra::column_spec(1:3, bold = TRUE) |>  # Make header titles bold
   kableExtra::row_spec(0, background = "#ADD8E6")  # Change background color of the header row (light blue)
 ```
+
 ```{r, echo=FALSE}
 # Step 1: Filter for graduated students and ensure non-missing credit hours
 graduated_students <- BA |>
@@ -519,6 +482,7 @@ knitr::kable(graduation_stats, caption = "Mean Credit Hours by Number of Majors 
   kableExtra::column_spec(1:2, bold = TRUE) |>  # Make header titles bold
   kableExtra::row_spec(0, background = "#ADD8E6")
 ```
+
 From these three tables I am able to obtain a few insights that I can bring into future analyses: 
 
 1. Students graduate from Miami's Business Analytics major with a wide variety of credit hours. 
@@ -528,6 +492,7 @@ From these three tables I am able to obtain a few insights that I can bring into
 To proceed, we will explore the possibility of classifying students by the number of credit hours they have completed.
 
 In our previous analyses, we were exploring the potential of classifying students in our database based upon the number of semesters they have been enrolled at Miami University. However, another potential area we may explore to classify students is based on the number of cumulative credit hours they have completed, whether at Miami University or elsewhere. Many students may have transfer credits through AP coursework from high school or from another college if they transferred. We suspect that BannerWeb is currently classifying students based on the number of cumulative credit hours they have completed currently, but have no inclination if that is true.
+
 ```{r, echo=FALSE}
 BA |> 
     dplyr::filter(
@@ -545,40 +510,28 @@ BA |>
   dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |> 
   print()
 ```
-When I classify a student's grade classification, assuming that on average each student completes 15 credit hours per semester, I start to notice a couple of problems. For starters, let's examine the incoming pipeline number for last fall: 
+When I classify a student's grade classification, assuming that on average each student completes 15 credit hours per semester, I start to notice a couple of problems. For starters, let's examine term code 202420, referencing Spring Semester 2024: 
 
 ```{r,echo=FALSE}
-# Step 1: Calculate cumulative credit hours before the term 202410
-BA_prior <- BA |>
-  dplyr::filter(Term.Code < 202410) |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::summarise(Cum.Credit.Hrs.Before = max(Cum.Credit.Hrs, na.rm = TRUE), .groups = 'drop')
-
-# Step 2: Join with the original data to get the classification based on credit hours before 202410
 result <- BA |>
   dplyr::filter(
     (Major.1 == "BA Major" | 
      Major.2 == "BA Major" | 
      Major.3 == "BA Major") & 
-    Term.Code == 202410
+    Term.Code == 202420
   ) |>
-  dplyr::left_join(BA_prior, by = "Student.ID") |>
-  dplyr::mutate(Cum.Credit.Hrs.Before = dplyr::if_else(is.na(Cum.Credit.Hrs.Before), 0, Cum.Credit.Hrs.Before)) |>
   dplyr::mutate(Classification = dplyr::case_when(
-    Cum.Credit.Hrs.Before >= 0 & Cum.Credit.Hrs.Before < 30 ~ "Freshmen",
-    Cum.Credit.Hrs.Before >= 30 & Cum.Credit.Hrs.Before < 60 ~ "Sophomore",
-    Cum.Credit.Hrs.Before >= 60 & Cum.Credit.Hrs.Before < 90 ~ "Junior",
-    Cum.Credit.Hrs.Before >= 90 ~ "Senior"
+    Cum.Credit.Hrs >= 0 & Cum.Credit.Hrs < 30 ~ "Freshmen",
+    Cum.Credit.Hrs >= 30 & Cum.Credit.Hrs < 60 ~ "Sophomore",
+    Cum.Credit.Hrs >= 60 & Cum.Credit.Hrs < 90 ~ "Junior",
+    Cum.Credit.Hrs >= 90 ~ "Senior"
   )) |>
   dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior"))) |>
   dplyr::group_by(Term.Code, Classification) |>
-  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID), .groups = 'drop') |>
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |>
   dplyr::arrange(Classification)
 
 # Display the result in a formatted table
-if(require(knitr)==FALSE) install.packages("knitr")
-if(require(kableExtra)==FALSE) install.packages("kableExtra")
-
 knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Students"), caption = "Student Classification for Spring 2024") |>
   kableExtra::kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
@@ -587,7 +540,6 @@ knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Stu
   ) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
-
 
 As I drill in to this specific term code, I notice that through a previous analysis, there were a total of 44 students who graduated this semester in total, yet my data with classified by credit hours says that there are 161 current seniors this semester. With an undergraduate program typically being 4 years long, we would expect to see the number of seniors for this semester to be equal, or close to, the total number of students graduating for that semester. From this, we are able to make two key conclusions: 
 
@@ -625,11 +577,13 @@ BA <- BA %>%
   select(-num_semesters_up_to_now)
 ```
 
+
 ### Cases of Students Graduating Early
 
 Now that we have decided to classify students by the number of semesters they have completed at Miami, we want to start looking into the exceptions of the rule that students would graduate either earlier or later than their anticipated graduation date, or after 8 semesters they have completed at Miami University. 
 
 Let's start by looking at the overall breakdown of these students who have graduated early with a Business Analytics major.
+
 ```{r, echo=FALSE}
 # Identify students who have graduated and have "BA Major" in their graduation term
 graduated_students <- BA |>
@@ -708,9 +662,11 @@ knitr::kable(students_4_semesters_data, col.names = c("Student ID", "Cohort Term
   kableExtra::column_spec(3) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
+
 As I look through the four semesters of this student's enrollment, the primary thing that jumps out at me is the number of cumulative credit hours that the student had completed their first semester. Having such a high number likely indicates that they either transferred a lot of credit from high school, or that they transferred to Miami from another school. This is a pattern we should continue to look at as we continue to develop our student classification mechanism further, as students with a high number of credit hours their first semester may be more likely to graduate early.
 
 Let's look at student's who graduated in 6 semesters:
+
 ```{r, echo=FALSE}
 # Step 1: Identify students who graduated in 6 semesters
 students_6_semesters <- semester_counts |>
@@ -767,6 +723,7 @@ knitr::kable(graduated_students_6_semesters,
 ```
 
 Above is the table showing the stats for students who graduated from Miami University in just 6 semesters with a degree in Business Analytics. Let's summarize some of this detail at a high level:
+
 ```{r, echo=FALSE}
 # Calculate the mean number of credit hours during the first semester
 mean_first_semester_credits <- graduated_students_6_semesters |>
@@ -810,9 +767,11 @@ knitr::kable(summary_table,
   )
 
 ```
+
 At a high level, the only item that sticks out is the average number of credit hours completed in the first semester. This number seems to be particularly higher amongst students who have graduated in both 4 and 6 semesters. Following the traditional college schedule of taking 15 credit hours per semester, we do not expect students to hit 60 credit hours until the end of their sophomore years. Thus, as we explore additional methods to classify students with grade levels, we should consider flagging these students who may have the potential to complete their degrees earlier than anticipated.
 
 Another factor we want to examine is how many credit hours these students are taking per semester. Students who may be taking more credit hours may be on track to graduate earlier.
+
 ```{r, echo=FALSE}
 # Step 1: Identify students who graduated in 6 semesters
 students_6_semesters <- semester_counts |>
@@ -877,7 +836,9 @@ knitr::kable(data.frame(Average_Credit_Hours_Per_Semester = avg_credit_hours_per
   kableExtra::column_spec(1) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
 ```
-From this, I can see that students who are graduating in 6 semesters are taking on average, 16.41 credit hours per semester. This is above the 15 credit hour standard that is asked of students, implying that part of the reason these students may be in a position to graduate early is because they are taking more credit hours than the average student. The average credit hour intake for all students is shown below - 
+
+From this, I can see that students who are graduating in 6 semesters are taking on average, 16.41 credit hours per semester. This is above the 15 credit hour standard that is asked of students, implying that part of the reason these students may be in a position to graduate early is because they are taking more credit hours than the average student. The average credit hour intake for all students is shown below:
+
 ```{r, echo=FALSE}
 # Calculate the credit hours per semester for all students
 credit_hours_per_semester_all <- BA |>
@@ -903,7 +864,9 @@ knitr::kable(data.frame(Average_Credit_Hours_Per_Semester = avg_credit_hours_per
   kableExtra::column_spec(1) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
 ```
+
 As we can see, all students in our database are taking on average 13.66 credit hours per semester. Thus, another sign that a student may be on track to graduate early can be defined as taking an average amount of credit hours that is significantly above the average.
+
 
 ### Cases of Students Graduating Late
 
@@ -954,6 +917,7 @@ knitr::kable(distribution, col.names = c("Number of Semesters", "Number of Stude
   kableExtra::column_spec(3) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
 ```
+
 Out of students who are graduating late, it appears that it takes them no longer than 10 semesters to complete their degree. Let's start by drilling into students who took 9 semesters to obtain a degree in Business Analytics.
 
 ```{r, echo=FALSE}
@@ -1056,6 +1020,7 @@ knitr::kable(summary_table,
 ```
 
 This table confirms some of our initial assumptions about students who take longer than 8 semesters to graduate. Not shockingly, we see that these students often have significantly less credit hours after their first semester at Miami University. In addition we see that these students have a much lower GPA than students who graduate early. Let's check the average graduation GPA to see if this differs significantly.
+
 ```{r, echo=FALSE}
 # Step 1: Identify students who graduated with a "BA Major"
 students_with_ba_major <- BA |>
@@ -1080,7 +1045,9 @@ knitr::kable(average_gpa_ba_major,
   kableExtra::column_spec(1) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
 ```
+
 This table above confirms our general assumption that students who are graduating in more than 8 semesters have a lower GPA than the student body in general. These students also maybe have taken gap semesters or have failed classes, which they have had to retake. Let's look at the average number of credit hours these students are taking per semester.
+
 ```{r, echo=FALSE}
 # Step 1: Identify students who graduated in 6 semesters
 students_9_semesters <- semester_counts |>
@@ -1145,12 +1112,13 @@ knitr::kable(data.frame(Average_Credit_Hours_Per_Semester = avg_credit_hours_per
   kableExtra::column_spec(1) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
 ```
-This data confirms our assumption that students who have graduated in 9 semesters have taken less of a credit hour load than the normal student body. The average amount of credit hours that students are completing on a semesterly basis may be something for the Business Analytics department to consider as they track student progress, and potentially try and flag students who are falling behind.
+
+This data confirms our assumption that students who have graduated in 9 semesters have taken less of a credit hour load than the normal student body. The average amount of credit hours that students are completing on a semesterly basis may be something for the ISA department to consider as they track student progress, and potentially try and flag students who are falling behind.
 
 Now that we have closely examined students who have graduated in 9 semesters, let's see if this pattern is still true for students who have graduated in 10 semesters.
 
 ```{r, echo=FALSE}
-# Step 1: Identify students who graduated in 9 semesters
+# Step 1: Identify students who graduated in 10 semesters
 students_10_semesters <- semester_counts |>
   dplyr::filter(Semester_Count == 10) |>
   dplyr::select(Student.ID)
@@ -1202,6 +1170,7 @@ knitr::kable(graduated_students_10_semesters,
 From the table above, one pattern that I notice is that most of these students who graduate in 10 semesters had a major change, and most of which happened to be between different academic divisions. Different academic divisions at Miami, such as FSB and CAS have significantly different requirements for their majors, which may add more work for students to complete to graduate on time. 
 
 Let's look at some of these factors on a higher level: 
+
 ```{r, echo=FALSE}
 # Calculate the mean number of credit hours during the first semester
 mean_first_semester_credits <- graduated_students_10_semesters |>
@@ -1244,9 +1213,11 @@ knitr::kable(summary_table,
     position = "center"
   )
 ```
+
 Similarly to the students who graduated with a Business Analytics major in 9 semesters, those who graduated in 10 semesters have a lower cumulative GPA and less credit hours when they first start at Miami.
 
 Let's see if the number of credit hours they are taking per semester has an impact on their graduation.
+
 ```{r, echo=FALSE}
 # Step 1: Identify students who graduated in 6 semesters
 students_10_semesters <- semester_counts |>
@@ -1316,65 +1287,37 @@ Similarly to students who graduated in 9 semesters, students who took 10 semeste
 
 From our analyses of students who have graduated behind schedule, we have three major takeaways for the ISA department to potentially consider as they flag students who may be falling behind in the program: 
 
-1. Cumulative GPA - Students who may be at risk for graduating later than their peers may be doing so because they failed a core class that they would hav to retake. The ISA department should consider flagging students with a cumulative GPA under a 3.0 during their time at Miami, as these students are at a significantly higher risk of graduating later than their peers in the program.
+1. Cumulative GPA - Students who may be at risk for graduating later than their peers may be doing so because they failed a core class that they would have to retake. The ISA department should consider flagging students with a cumulative GPA under a 3.0 during their time at Miami, as these students are at a significantly higher risk of graduating later than their peers in the program.
 2. Number of Credit Hours Taken per Semester - This may coincide with GPA, as a student will not get credit for a class if they do not pass it. However, the department should be closely monitoring these numbers to identify students who may be at risk of completing their Business Analytics degree late. Miami University considers a full time student to be one that takes 12 credit hours per semester, so students taking an average less than that may be on a path to fall behind.
 3. Changing Majors - The department also has data to track a student's progress through their time at Miami. Although this may not be as significant of a factor as GPA or Credit Hours, the department should consider closely watching students who change their major, particularly between academic divisions. These students will likely have an increased number of requirements asked of them because of the change, and when they change their major should also be considered as students who change their major later in their academic career will be less likely to finish on time. 
 
-To summarize, we have found that classification by number of semesters completed appears to be the most accurate method. Thus, we will add a column to our dataset to keep track of student classification as they progress through their time at Miami.
-
-```{r, echo=FALSE}
-# Step 1: Ensure unique term codes for each student
-BA_unique_terms <- BA |>
-  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE)
-
-# Step 2: Calculate the number of semesters completed for each student up to each term
-BA_with_semesters <- BA_unique_terms |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::arrange(Term.Code) |>
-  dplyr::mutate(Semesters_Completed = dplyr::row_number() - 1) |>
-  dplyr::ungroup()
-
-# Step 3: Add classification based on the number of semesters completed
-BA_with_classification <- BA_with_semesters |>
-  dplyr::mutate(Classification = dplyr::case_when(
-    Semesters_Completed < 2 ~ "Freshman",
-    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
-    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
-    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
-    Semesters_Completed >= 8 ~ "Super Senior"
-  )) |>
-  dplyr::mutate(Classification = factor(Classification, levels = c("Freshman", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
-  dplyr::arrange(Student.ID, Term.Code)  # Sort by Student.ID and Term.Code
-
-# Display a sample of the updated dataset
-head(BA_with_classification)
-
-```
 
 
+## **IS Majors**
 
-## IS Majors
+After performing all of these calculations and transformations on the BA dataset, we can now replicate the same actions for the IS dataset. That way, we can gather the same information and insights for these students, while also keeping the majors separate. This is important because these two majors have different numbers regarding enrollment, expected graduations, and credit hours. Also by keeping the datasets separate, it will be easier for the ISA department to target specific factors for each major, and determine new courses of action that may need to occur in order to encourage stronger academic development for that specific major.
+
+All of the calculations below are ran to support our analyses and decisions made from the BA dataset. Many of the charts and metrics further support the same direction from BA students, while other calculations have a different direction, but still support the overall idea.
+
 
 ### Counts of IS Students Across Cohort and Term Code
-To initially explore the IS Major dataset, I wanted to look at the raw counts of students enrolled in the IS major across different cohort terms and term codes in which they are enrolled at Miami. This code will filter my table for students who have an IS Major indicated for at least one of their majors across different semesters for students in a particular cohort term. Below is our code output. Moving forward with analysis, I would be interested in showing how the number of students who graduated each semester could be implemented with this as we work to reclassify students.
+
 ```{r, echo=FALSE}
 IS = read.csv('data-clean/IS_Final.csv')
 result <- IS |>
-  dplyr::filter(
-    `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
-    `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
-    `Major.3` %in% c("IS Major", "Cybersecurity Mgt Major")
-  ) |>
+  dplyr::filter(`Major.1` == "IS Major" | `Major.2` == "IS Major" | `Major.3` == "IS Major") |>
   dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
   dplyr::summarize(Num_Students = n_distinct(`Student.ID`), .groups = 'drop')
-
+IS <- IS %>% filter(Student.ID != 9885956) ## Error observation
 
 # Display the reshaped table
 print(result)
+
 ```
 
-### Graduation Counts for IS Majors
-This preliminary analysis shows the number of IS Major students from each cohort term who graduated each semester. From first looks, I notice that most students graduate during the spring of their senior year. 
+
+### Graduation Counts for IS Majors by Academic Year
+
 ```{r, echo=FALSE}
 # Determine the maximum Term.Code for each Student.ID to identify the graduation term
 graduation_terms <- IS |>
@@ -1386,33 +1329,7 @@ graduated_students <- IS |>
   dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
   dplyr::filter(
     `Term.Code.Graduated` == `Term.Code`,
-    `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
-    `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
-    `Major.3` %in% c("IS Major", "Cybersecurity Mgt Major")
-  )
-
-# Count the number of students who graduated each semester for each Term.Code
-result <- graduated_students |>
-  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
-  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
-
-result
-```
-## Graduation Check
-```{r, echo=FALSE}
-# Determine the maximum Term.Code for each Student.ID to identify the graduation term
-graduation_terms <- IS |>
-  dplyr::group_by(`Student.ID`) |>
-  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
-
-# Filter the original data to only include rows where the Term.Code is the graduation term
-graduated_students <- IS |>
-  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
-  dplyr::filter(
-    `Term.Code.Graduated` == `Term.Code`,
-    `Major.1` %in% c("IS Major", "Cybersecurity Mgt Major") |
-    `Major.2` %in% c("IS Major", "Cybersecurity Mgt Major") |
-    `Major.3` %in% c("IS Major", "Cybersecurity Mgt Major")
+    `Major.1` == "IS Major" | `Major.2` == "Is Major" | `Major.3` == "IS Major"
   )
 
 # Count the number of students who graduated each semester for each Term.Code
@@ -1420,52 +1337,49 @@ result <- graduated_students |>
   dplyr::group_by(`Term.Code`) |>
   dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
 
-result
-```
-
-## Graduation Term Mapping for IS Majors
-```{r, echo=FALSE}
-result <- graduated_students |>
-  dplyr::group_by(`Term.Code`) |>
-  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop') |>
+# Create a mapping of Term.Code to academic year and term type
+result <- result |> 
   dplyr::mutate(
     Academic_Year = dplyr::case_when(
       Term.Code %in% c(202510, 202520) ~ "2024-2025",
       Term.Code %in% c(202410, 202420) ~ "2023-2024",
       Term.Code %in% c(202310, 202320) ~ "2022-2023",
-      TRUE ~ as.character(Term.Code)
+      Term.Code %in% c(202210, 202220) ~ "2021-2022",
+      Term.Code %in% c(202110, 202120) ~ "2020-2021",
+      Term.Code %in% c(202010, 202020) ~ "2019-2020",
+      Term.Code %in% c(201910, 201920) ~ "2018-2019",
+      Term.Code %in% c(201810, 201820) ~ "2017-2018",
+      TRUE ~ as.character(Term.Code)  # Default case if needed
     ),
     Term_Type = dplyr::case_when(
       stringr::str_ends(as.character(Term.Code), "10") ~ "Fall",
       stringr::str_ends(as.character(Term.Code), "20") ~ "Spring",
       TRUE ~ "Unknown"
     )
+  ) |>
+  dplyr::mutate(Term_Type = factor(Term_Type, levels = c("Spring", "Fall")))
+
+# Create a stacked bar plot
+ggplot2::ggplot(result, ggplot2::aes(x = Academic_Year, y = Num_Graduated, fill = Term_Type)) + 
+  ggplot2::geom_bar(stat = "identity") + 
+  ggplot2::geom_text(ggplot2::aes(label = Num_Graduated), position = ggplot2::position_stack(vjust = 0.5), size = 3.5) + 
+  ggplot2::labs(
+    title = "Number of IS Major Graduates by Term Code",
+    x = "Academic Year",
+    y = "Number of Graduates",
+    fill = "Term Type"
+  ) + 
+  ggplot2::theme_minimal() + 
+  ggplot2::scale_fill_manual(values = c("Fall" = "#ADD8E6", "Spring" = "#0047AB")) + # Custom colors for Fall and Spring
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(hjust = 0.5)  # Center the title
   )
-
 ```
 
-```{r, echo=FALSE}
-IS <- IS %>%
-  group_by(Student.ID) %>%
-  arrange(Student.ID, Term.Code) %>%
-  mutate(
-    num_semesters_up_to_now = rank(Term.Code, ties.method = "first"),
-    grade_classification = case_when(
-      num_semesters_up_to_now <= 2 ~ "Freshman",
-      num_semesters_up_to_now >= 3 & num_semesters_up_to_now <= 4 ~ "Sophomore",
-      num_semesters_up_to_now >= 5 & num_semesters_up_to_now <= 6 ~ "Junior",
-      num_semesters_up_to_now >= 7 & num_semesters_up_to_now <= 8 ~ "Senior",
-      num_semesters_up_to_now > 8 ~ "Super-Senior",
-      TRUE ~ "Unknown"
-    )
-  ) %>%
-  ungroup()
 
-```
-```{r,echo=FALSE}
-IS = read.csv('data-clean/IS_Final.csv')
-```
-```{r, echo=FALSE}
+### Graduation Counts for IS Majors - by Cohort and Term Code
+
+```{r, echo =FALSE}
 # Determine the maximum Term.Code for each Student.ID to identify the graduation term
 graduation_terms <- IS |>
   dplyr::group_by(`Student.ID`) |>
@@ -1485,8 +1399,9 @@ result <- graduated_students |>
   dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')
 
 result
-
 ```
+
+Let's more closely take a look at those who graduated last spring:
 
 ```{r, echo=FALSE}
 # Determine the maximum Term.Code for each Student.ID to identify the graduation term
@@ -1505,8 +1420,9 @@ graduated_students <- IS |>
 # Count the number of students who graduated each semester for each Term.Code
 result <- graduated_students |>
   dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
-  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop') |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')|>
   dplyr::filter(`Term.Code` == 202420)
+
 
 # Display the distribution in a formatted table with a colored header
 knitr::kable(result, col.names = c("Cohort Term", "Term Code", "Number of Graduates"), caption = "Spring 2024 Graduates") |>
@@ -1518,9 +1434,11 @@ knitr::kable(result, col.names = c("Cohort Term", "Term Code", "Number of Gradua
   kableExtra::column_spec(1) |>
   kableExtra::column_spec(2) |>
   kableExtra::column_spec(3) |>
-  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
-
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
+
+Let's show the distribution of number of semesters it takes for students to graduate:
+
 ```{r, echo=FALSE}
 # Identify students who have graduated
 graduated_students <- IS |>
@@ -1555,115 +1473,174 @@ knitr::kable(distribution, col.names = c("Number of Semesters", "Number of Stude
   kableExtra::column_spec(1) |>
   kableExtra::column_spec(2) |>
   kableExtra::column_spec(3) |>
-  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
-
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
+
+
+### Count of Student Grade Classification by Credit Hours
+
 ```{r, echo=FALSE}
+
 # Step 1: Identify the maximum Term.Code for each student
-IS <- IS |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::mutate(max_term_code = max(Term.Code)) |>
-  dplyr::ungroup()
+IS <- IS %>%
+  group_by(Student.ID) %>%
+  mutate(max_term_code = max(Term.Code)) %>%
+  ungroup()
 
 # Step 2: Identify graduated students by comparing Term.Code.Graduated to their max Term.Code
-IS <- IS |>
-  dplyr::mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
+IS <- IS %>%
+  mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
 
 # Step 3: Filter for students who have graduated and capture their cumulative credit hours at graduation
-graduated_students <- IS |>
-  dplyr::filter(graduated == TRUE, Term.Code.Graduated < 202510) |>
-  dplyr::select(Student.ID, Cum.Credit.Hours)
+graduated_students <- IS %>%
+  filter(graduated == TRUE) %>%
+  select(Student.ID, Cum.Credit.Hours)
 
 # Step 4: Visualize the distribution of cumulative credit hours at graduation
-if(require(ggplot2)==FALSE) install.packages("ggplot2")
+library(ggplot2)
 
-ggplot2::ggplot(graduated_students, ggplot2::aes(x = Cum.Credit.Hours)) +
-  ggplot2::geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
-  ggplot2::labs(
+# Plot the distribution of cumulative credit hours at graduation
+ggplot(graduated_students, aes(x = Cum.Credit.Hours)) +
+  geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
+  labs(
     title = "Distribution of Cumulative Credit Hours at Graduation",
     x = "Cumulative Credit Hours",
     y = "Number of Students"
   ) +
-  ggplot2::theme_minimal()
-
+  theme_minimal()
 ```
-```{r, echo=FALSE}
-# Step 1: Determine the maximum Term.Code for each Student.ID to identify the graduation term
-graduation_terms <- IS |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::summarize(Max_Term_Code = max(Term.Code), .groups = 'drop')
+Below we will detail some further statistics regarding those in our data set who have graduated with an Information Systems Degree.
 
-# Step 2: Filter the original data to only include rows where the Term.Code is the graduation term
-graduated_students <- IS |>
-  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
-  dplyr::filter(
-    Term.Code.Graduated %in% c(202410, 202420),
-    Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major" |
-    Major.1 == "Cybersecurity Mgt Major" | Major.2 == "Cybersecurity Mgt Major" |
-    Major.3 == "Cybersecurity Mgt Major"
+```{r, echo=FALSE}
+# Step 1: Filter for graduated students and ensure non-missing credit hours
+graduated_students <- IS %>% 
+  filter(graduated == TRUE & !is.na(Cum.Credit.Hours))  # Only include graduated students with valid credit hours
+
+# Step 2: Calculate the min, mean, and max number of Cum.Credit.Hrs for graduated students
+graduation_stats <- graduated_students %>%
+  summarise(
+    min_credit_hours = min(Cum.Credit.Hours, na.rm = TRUE),
+    mean_credit_hours = mean(Cum.Credit.Hours, na.rm = TRUE),
+    max_credit_hours = max(Cum.Credit.Hours, na.rm = TRUE)
   )
 
-# Step 3: Count the number of terms each student was enrolled in
-student_terms_count <- IS |>
-  dplyr::filter(Student.ID %in% graduated_students$Student.ID) |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::summarize(Num_Semesters = dplyr::n_distinct(Term.Code), .groups = 'drop')
+# Rename the columns before using kable
+colnames(graduation_stats) <- c("Minimum Credit Hours", "Mean Credit Hours", "Maximum Credit Hours")
 
-# Step 4: Join the number of semesters back to the graduated students data
-graduated_students <- graduated_students |>
-  dplyr::left_join(student_terms_count, by = "Student.ID")
-
-# Step 5: Count the number of graduates by the number of semesters
-result <- graduated_students |>
-  dplyr::group_by(Num_Semesters) |>
-  dplyr::summarize(Num_Graduated = dplyr::n_distinct(Student.ID), .groups = 'drop')
-
-# Display the distribution in a formatted table with a colored header
-if(require(knitr)==FALSE) install.packages("knitr")
-if(require(kableExtra)==FALSE) install.packages("kableExtra")
-
-knitr::kable(result, col.names = c("Number of Semesters", "Number of Graduates"), caption = "Graduates by Number of Semesters for Academic Year 2023-2024") |>
+# Create the table with customized headers and styling
+knitr::kable(graduation_stats, caption = "Graduated Students' Cumulative Credit Hours Statistics") %>%
+  # Apply bold styling to the header row and change background color
   kableExtra::kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"),
-    full_width = FALSE,
-    position = "center"
-  ) |>
-  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
+    bootstrap_options = c("striped", "hover", "responsive"),
+    full_width = F
+  ) %>%
+  kableExtra::column_spec(1:3, bold = TRUE) %>%  # Make header titles bold
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Change background color of the header row (light blue)
 ```
-```{r, echo=FALSE}
-# Step 1: Calculate the number of semesters completed before the term 202410
-IS_prior <- IS |>
-  dplyr::filter(Term.Code < 202410) |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::summarise(Semesters_Completed = dplyr::n_distinct(Term.Code), .groups = 'drop')
 
-# Step 2: Join with the original data to get the classification based on semesters completed before 202410
+```{r, echo=FALSE}
+# Assuming your data frame is named 'student_data'
+result <- IS |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == min(Term.Code)) |>
+  dplyr::ungroup() |>
+  dplyr::summarise(
+    min_credit_hrs = min(Cum.Credit.Hours),
+    median_credit_hrs = median(Cum.Credit.Hours),
+    max_credit_hrs = max(Cum.Credit.Hours)
+  )
+
+# Create the table with customized headers and styling
+knitr::kable(result, caption = "Cumulative Credit Hours Statistics for First Term") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "responsive"),
+    full_width = FALSE
+  ) |>
+  kableExtra::column_spec(1:3, bold = TRUE) |>  # Make header titles bold
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Change background color of the header row (light blue)
+```
+
+```{r, echo=FALSE}
+# Step 1: Filter for graduated students and ensure non-missing credit hours
+graduated_students <- IS |>
+  dplyr::filter(graduated == TRUE & !is.na(Cum.Credit.Hours))
+
+# Step 2: Determine the number of majors for each student in their last term
+graduated_students <- graduated_students |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::mutate(
+    num_majors = dplyr::case_when(
+      Major.1 != "None" & Major.2 == "None" & Major.3 == "None" ~ 1,
+      Major.1 != "None" & Major.2 != "None" & Major.3 == "None" ~ 2,
+      Major.1 != "None" & Major.2 != "None" & Major.3 != "None" ~ 3,
+      TRUE ~ 0
+    )
+  ) |>
+  dplyr::ungroup()
+
+# Step 3: Calculate the mean number of Cum.Credit.Hrs for each group of majors
+graduation_stats <- graduated_students |>
+  dplyr::group_by(num_majors) |>
+  dplyr::summarise(
+    mean_credit_hours = mean(Cum.Credit.Hours, na.rm = TRUE)
+  )
+
+# Rename the columns before using kable
+colnames(graduation_stats) <- c("Number of Majors", "Mean Credit Hours")
+
+# Create the table with customized headers and styling
+knitr::kable(graduation_stats, caption = "Mean Credit Hours by Number of Majors for Graduated Students") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "responsive"),
+    full_width = FALSE
+  ) |>
+  kableExtra::column_spec(1:2, bold = TRUE) |>  # Make header titles bold
+  kableExtra::row_spec(0, background = "#ADD8E6")
+```
+
+To proceed, we will explore the possibility of classifying students by the number of credit hours they have completed.
+
+```{r, echo=FALSE}
+IS |> 
+    dplyr::filter(
+    Major.1 == "IS Major" | 
+    Major.2 == "IS Major" | 
+    Major.3 == "IS Major"
+  ) |> 
+  dplyr::mutate(Classification = dplyr::case_when(
+    Cum.Credit.Hours >= 0 & Cum.Credit.Hours < 30 ~ "Freshman",
+    Cum.Credit.Hours >= 30 & Cum.Credit.Hours < 60 ~ "Sophomore",
+    Cum.Credit.Hours >= 60 & Cum.Credit.Hours < 90 ~ "Junior",
+    Cum.Credit.Hours >= 90 ~ "Senior"
+  )) |> 
+  dplyr::group_by(Term.Code, Classification) |> 
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |> 
+  print()
+```
+
+Let's examine term code 202420, referencing Spring Semester 2024: 
+
+```{r,echo=FALSE}
 result <- IS |>
   dplyr::filter(
-    (Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major" |
-    Major.1 == "Cybersecurity Mgt Major" | Major.2 == "Cybersecurity Mgt Major" |
-    Major.3 == "Cybersecurity Mgt Major"
-    ) & 
-    Term.Code == 202410
+    (Major.1 == "IS Major" | 
+     Major.2 == "IS Major" | 
+     Major.3 == "IS Major") & 
+    Term.Code == 202420
   ) |>
-  dplyr::left_join(IS_prior, by = "Student.ID") |>
-  dplyr::mutate(Semesters_Completed = dplyr::if_else(is.na(Semesters_Completed), 0, Semesters_Completed)) |>
   dplyr::mutate(Classification = dplyr::case_when(
-    Semesters_Completed < 2 ~ "Freshmen",
-    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
-    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
-    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
-    Semesters_Completed >= 8 ~ "Super Senior"
+    Cum.Credit.Hours >= 0 & Cum.Credit.Hours < 30 ~ "Freshmen",
+    Cum.Credit.Hours >= 30 & Cum.Credit.Hours < 60 ~ "Sophomore",
+    Cum.Credit.Hours >= 60 & Cum.Credit.Hours < 90 ~ "Junior",
+    Cum.Credit.Hours >= 90 ~ "Senior"
   )) |>
-  dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
+  dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior"))) |>
   dplyr::group_by(Term.Code, Classification) |>
-  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID), .groups = 'drop') |>
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |>
   dplyr::arrange(Classification)
 
 # Display the result in a formatted table
-if(require(knitr)==FALSE) install.packages("knitr")
-if(require(kableExtra)==FALSE) install.packages("kableExtra")
-
 knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Students"), caption = "Student Classification for Spring 2024") |>
   kableExtra::kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
@@ -1672,39 +1649,704 @@ knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Stu
   ) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
-Add a column to IS data set that keeps track of a student's grade classification.
+
+We will proceed in furthering our analyses by classifying student grade levels by the number of semesters they have completed at Miami.
+
 ```{r, echo=FALSE}
-# Step 1: Ensure unique term codes for each student
-IS_unique_terms <- IS |>
-  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE)
+## create a new column in IS to classify students based upon # of semesters they have completed.
 
-# Step 2: Calculate the number of semesters completed for each student up to each term
-IS_with_semesters <- IS_unique_terms |>
-  dplyr::group_by(Student.ID) |>
-  dplyr::arrange(Term.Code) |>
-  dplyr::mutate(Semesters_Completed = dplyr::row_number() - 1) |>
-  dplyr::ungroup()
+# Step 1: Calculate the number of semesters the student has completed up to each term (inclusive)
+IS <- IS %>%
+  # Group by Student.ID so that we can calculate the number of distinct terms for each student
+  group_by(Student.ID) %>%
+  arrange(Student.ID, Term.Code) %>%  # Ensure that the rows are ordered by Term.Code
+  mutate(
+    # Calculate the number of distinct terms up to and including the current row
+    num_semesters_up_to_now = rank(Term.Code, ties.method = "first"),
+    
+    # Step 2: Classify the student based on the number of semesters
+    grade_classification = case_when(
+      num_semesters_up_to_now <= 2 ~ "Freshman",
+      num_semesters_up_to_now >= 3 & num_semesters_up_to_now <= 4 ~ "Sophomore",
+      num_semesters_up_to_now >= 5 & num_semesters_up_to_now <= 6 ~ "Junior",
+      num_semesters_up_to_now >= 7 & num_semesters_up_to_now <=8 ~ "Senior",
+      num_semesters_up_to_now > 8 ~ "Super-Senior", # Optional, if students go beyond 8 semesters
+      TRUE ~ "Unknown" # In case of any edge cases
+    )
+  ) %>%
+  ungroup()
 
-# Step 3: Add classification based on the number of semesters completed
-IS_with_classification <- IS_with_semesters |>
-  dplyr::mutate(Classification = dplyr::case_when(
-    Semesters_Completed < 2 ~ "Freshman",
-    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
-    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
-    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
-    Semesters_Completed >= 8 ~ "Super Senior"
-  )) |>
-  dplyr::mutate(Classification = factor(Classification, levels = c("Freshman", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
-  dplyr::arrange(Student.ID, Term.Code)  # Sort by Student.ID and Term.Code
-
-# Display a sample of the updated dataset
-head(IS_with_classification)
-
+# Drop the 'num_semesters_up_to_now' column
+IS <- IS %>%
+  select(-num_semesters_up_to_now)
 ```
 
 
-# Next Steps
-Now that we officially have our data sets cleaned and merged, we are ready to do some analyses on our data.
+### Cases of Students Graduating Early
+
+Let's start by looking at the overall breakdown of these students who have graduated early with an Information Systems major.
+
+```{r, echo=FALSE}
+# Identify students who have graduated and have "BA Major" in their graduation term
+graduated_students <- IS |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == Term.Code.Graduated) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Count the number of unique Term.Code entries for each Student.ID
+semester_counts <- IS |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarize(Semester_Count = dplyr::n_distinct(Term.Code), .groups = 'drop')
+
+# Join the semester counts with the graduated students
+graduated_students <- graduated_students |>
+  dplyr::inner_join(semester_counts, by = "Student.ID")
+
+# Summarize the distribution of semester counts
+distribution <- graduated_students |>
+  dplyr::group_by(Semester_Count) |>
+  dplyr::summarize(Num_Students = dplyr::n(), .groups = 'drop')
+
+# Filter for students graduating in less than 8 semesters
+distribution <- distribution |>
+  dplyr::filter(Semester_Count < 8)
+
+# Calculate the total number of students
+total_students <- sum(distribution$Num_Students)
+
+# Add a percentage column
+distribution <- distribution |>
+  dplyr::mutate(Percentage = (Num_Students / total_students) * 100)
+
+# Display the distribution in a formatted table with a colored header
+knitr::kable(distribution, col.names = c("Number of Semesters", "Number of Students", "% of Total"), caption = "Distribution of Semesters to Graduation for BA Majors") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+
+```
+
+Let's look at student's who graduated in 6 semesters:
+
+```{r, echo=FALSE}
+# Step 1: Identify students who graduated in 6 semesters
+students_6_semesters <- semester_counts |>
+  dplyr::filter(Semester_Count == 6) |>
+  dplyr::select(Student.ID)
+
+# Step 2: Get the rows from the IS dataframe for these students
+students_6_semesters_data <- IS |>
+  dplyr::filter(Student.ID %in% students_6_semesters$Student.ID)
+
+# Step 3: Filter for students who have "IS Major" in their final term
+students_with_is_major <- students_6_semesters_data |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Step 4: Select only the first and last row for each Student.ID (first and last semester)
+graduated_students_6_semesters <- students_6_semesters_data |>
+  dplyr::filter(Student.ID %in% students_with_is_major$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == min(Term.Code) | Term.Code == max(Term.Code)) |>
+  dplyr::ungroup()
+
+# Step 5: For the first and last semester, collapse majors into a single column (one for each row)
+graduated_students_6_semesters <- graduated_students_6_semesters |>
+  dplyr::group_by(Student.ID, Term.Code) |>
+  dplyr::mutate(All_Majors = paste(unique(na.omit(c(Major.1, Major.2, Major.3)[c(Major.1, Major.2, Major.3) != "None"])), collapse = ", ")) |>
+  dplyr::ungroup()
+
+# Step 6: Remove duplicate rows by Student.ID and Term.Code (to avoid repeated majors for students with multiple majors)
+graduated_students_6_semesters <- graduated_students_6_semesters |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE) |>
+  dplyr::select(Student.ID, Cohort.Term, Term.Code, Cum.Credit.Hours, Cum.UG.Crs.GPA, All_Majors)
+
+# Step 7: Filter out students who graduated in term 202510
+graduated_students_6_semesters <- graduated_students_6_semesters |>
+  dplyr::filter(Term.Code != 202510)
+
+# Display the distribution in a formatted table with a colored header
+knitr::kable(graduated_students_6_semesters, 
+             col.names = c("Student ID", "Cohort Term", "Term Code", "Cumulative Credit Hours", "Cumulative GPA", "Major(s)"), 
+             caption = "Distribution of Semesters to Graduation") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+
+```
+
+Above is the table showing the stats for students who graduated from Miami University in just 6 semesters with a degree in Information Systems. Let's summarize some of this detail at a high level:
+
+```{r, echo=FALSE}
+# Calculate the mean number of credit hours during the first semester
+mean_first_semester_credits <- graduated_students_6_semesters |>
+  dplyr::filter(Term.Code == Cohort.Term) |>
+  dplyr::summarize(mean_credits = mean(`Cum.Credit.Hours`, na.rm = TRUE)) |>
+  dplyr::pull(mean_credits)
+
+# Calculate the mean GPA at graduation
+mean_graduation_gpa <- graduated_students_6_semesters |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::summarize(mean_gpa = mean(`Cum.UG.Crs.GPA`, na.rm = TRUE)) |>
+  dplyr::pull(mean_gpa) |> 
+  mean(na.rm = TRUE)  # Get the overall mean across all students
+
+# Calculate the percentage of students who graduated with more than one major
+# We only want one result for the percentage, not grouped by Student.ID
+percentage_more_than_one_major <- graduated_students_6_semesters |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::mutate(num_majors = stringr::str_count(All_Majors, ", ") + 1) |>
+  dplyr::summarize(more_than_one_major = sum(num_majors > 1)) |>
+  dplyr::ungroup() |>
+  dplyr::summarize(percentage = (sum(more_than_one_major > 0) / n()) * 100) |>
+  dplyr::pull(percentage)
+
+# Create a summary table with a single row
+summary_table <- tibble::tibble(
+  `Mean First Semester Credits` = mean_first_semester_credits,
+  `Mean Graduation GPA` = mean_graduation_gpa,
+  `Percentage with More Than One Major` = percentage_more_than_one_major
+)
+
+# Display the summary table
+knitr::kable(summary_table, 
+             caption = "Summary of Student Graduation Data") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+
+```
+
+Another factor we want to examine is how many credit hours these students are taking per semester. Students who may be taking more credit hours may be on track to graduate earlier.
+
+```{r, echo=FALSE}
+# Step 1: Identify students who graduated in 6 semesters
+students_6_semesters <- semester_counts |>
+  dplyr::filter(Semester_Count == 6) |>
+  dplyr::select(Student.ID)
+
+# Step 2: Get the rows from the IS dataframe for these students
+students_6_semesters_data <- IS |>
+  dplyr::filter(Student.ID %in% students_6_semesters$Student.ID)
+
+# Step 3: Filter for students who have "IS Major" in their final term
+students_with_is_major <- students_6_semesters_data |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Step 4: Select only the first and last row for each Student.ID (first and last semester)
+graduated_students_6_semesters <- students_6_semesters_data |>
+  dplyr::filter(Student.ID %in% students_with_is_major$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == min(Term.Code) | Term.Code == max(Term.Code)) |>
+  dplyr::ungroup()
+
+# Step 5: For the first and last semester, collapse majors into a single column (one for each row)
+graduated_students_6_semesters <- graduated_students_6_semesters |>
+  dplyr::group_by(Student.ID, Term.Code) |>
+  dplyr::mutate(All_Majors = paste(unique(na.omit(c(Major.1, Major.2, Major.3)[c(Major.1, Major.2, Major.3) != "None"])), collapse = ", ")) |>
+  dplyr::ungroup()
+
+# Step 6: Remove duplicate rows by Student.ID and Term.Code (to avoid repeated majors for students with multiple majors)
+graduated_students_6_semesters <- graduated_students_6_semesters |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE) |>
+  dplyr::select(Student.ID, Cohort.Term, Term.Code, Cum.Credit.Hours, Cum.UG.Crs.GPA, All_Majors)
+
+# Step 7: Filter out students who graduated in term 202510
+graduated_students_6_semesters <- graduated_students_6_semesters |>
+  dplyr::filter(Term.Code != 202510)
+
+# Step 8: Calculate the credit hours per semester
+credit_hours_per_semester <- students_6_semesters_data |>
+  dplyr::filter(Student.ID %in% graduated_students_6_semesters$Student.ID) |>
+  dplyr::arrange(Student.ID, Term.Code) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::mutate(Credit_Hours_Semester = Cum.Credit.Hours - dplyr::lag(Cum.Credit.Hours, default = 0)) |>
+  dplyr::ungroup()
+
+# Step 9: Calculate the aggregated average credit hours per semester
+total_credit_hours <- sum(credit_hours_per_semester$Credit_Hours_Semester, na.rm = TRUE)
+total_semesters <- nrow(credit_hours_per_semester)
+avg_credit_hours_per_semester_aggregated <- total_credit_hours / total_semesters
+
+# Display the aggregated average credit hours per semester
+knitr::kable(data.frame(Average_Credit_Hours_Per_Semester = avg_credit_hours_per_semester_aggregated), 
+             col.names = c("Average Credit Hours per Semester"), 
+             caption = "Aggregated Average Credit Hours per Semester for Graduated Students") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+
+The average credit hour intake for all students is shown below:
+
+```{r, echo=FALSE}
+# Calculate the credit hours per semester for all students
+credit_hours_per_semester_all <- IS |>
+  dplyr::arrange(Student.ID, Term.Code) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::mutate(Credit_Hours_Semester = Cum.Credit.Hours - dplyr::lag(Cum.Credit.Hours, default = 0)) |>
+  dplyr::ungroup()
+
+# Calculate the aggregated average credit hours per semester for all students
+total_credit_hours_all <- sum(credit_hours_per_semester_all$Credit_Hours_Semester, na.rm = TRUE)
+total_semesters_all <- nrow(credit_hours_per_semester_all)
+avg_credit_hours_per_semester_all <- total_credit_hours_all / total_semesters_all
+
+# Display the aggregated average credit hours per semester for all students
+knitr::kable(data.frame(Average_Credit_Hours_Per_Semester = avg_credit_hours_per_semester_all), 
+             col.names = c("Average Credit Hours per Semester"), 
+             caption = "Aggregated Average Credit Hours per Semester for All Students") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+
+
+### Cases of Students Graduating Late
+
+Let's show the distribution of students who have taken longer than 8 semesters to graduate:
+
+```{r, echo=FALSE}
+# Identify students who have graduated and have "IS Major" in their graduation term
+graduated_students <- IS |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == Term.Code.Graduated) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Count the number of unique Term.Code entries for each Student.ID
+semester_counts <- IS |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarize(Semester_Count = dplyr::n_distinct(Term.Code), .groups = 'drop')
+
+# Join the semester counts with the graduated students
+graduated_students <- graduated_students |>
+  dplyr::inner_join(semester_counts, by = "Student.ID")
+
+# Summarize the distribution of semester counts
+distribution <- graduated_students |>
+  dplyr::group_by(Semester_Count) |>
+  dplyr::summarize(Num_Students = dplyr::n(), .groups = 'drop')
+
+# Filter for students graduating in less than 8 semesters
+distribution <- distribution |>
+  dplyr::filter(Semester_Count > 8)
+
+# Calculate the total number of students
+total_students <- sum(distribution$Num_Students)
+
+# Add a percentage column
+distribution <- distribution |>
+  dplyr::mutate(Percentage = (Num_Students / total_students) * 100)
+
+# Display the distribution in a formatted table with a colored header
+knitr::kable(distribution, col.names = c("Number of Semesters", "Number of Students", "% of Total"), caption = "Distribution of Semesters to Graduation for BA Majors") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+ 
+Let's start by drilling into the student who took 9 semesters to obtain a degree in Information Systems.
+
+```{r, echo=FALSE}
+# Step 1: Identify students who graduated in 9 semesters
+students_9_semesters <- semester_counts |>
+  dplyr::filter(Semester_Count == 9) |>
+  dplyr::select(Student.ID)
+
+# Step 2: Get the rows from the IS dataframe for these students
+students_9_semesters_data <- IS |>
+  dplyr::filter(Student.ID %in% students_9_semesters$Student.ID)
+
+# Step 3: Filter for students who have "IS Major" in their final term
+students_with_is_major <- students_9_semesters_data |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Step 4: Select only the first and last row for each Student.ID (first and last semester)
+graduated_students_9_semesters <- students_9_semesters_data |>
+  dplyr::filter(Student.ID %in% students_with_is_major$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == min(Term.Code) | Term.Code == max(Term.Code)) |>
+  dplyr::ungroup()
+
+# Step 5: For the first and last semester, collapse majors into a single column (one for each row)
+graduated_students_9_semesters <- graduated_students_9_semesters |>
+  dplyr::group_by(Student.ID, Term.Code) |>
+  dplyr::mutate(All_Majors = paste(unique(na.omit(c(Major.1, Major.2, Major.3)[c(Major.1, Major.2, Major.3) != "None"])), collapse = ", ")) |>
+  dplyr::ungroup()
+
+# Step 6: Remove duplicate rows by Student.ID and Term.Code (to avoid repeated majors for students with multiple majors)
+graduated_students_9_semesters <- graduated_students_9_semesters |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE) |>
+  dplyr::select(Student.ID, Cohort.Term, Term.Code, Cum.Credit.Hours, Cum.UG.Crs.GPA, All_Majors)
+
+# Step 7: Filter out student ID 8226483
+graduated_students_9_semesters <- graduated_students_9_semesters |>
+  dplyr::filter(Student.ID != 8226483)
+
+# Display the distribution in a formatted table with a colored header
+knitr::kable(graduated_students_9_semesters, 
+             col.names = c("Student ID", "Cohort Term", "Term Code", "Cumulative Credit Hours", "Cumulative GPA", "Major(s)"), 
+             caption = "Distribution of Semesters to Graduation") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+
+This table shows the details for both the student's first and last semester assuming they graduated in 9 semesters. Here are some of the high level statistics:
+
+```{r, echo=FALSE}
+# Calculate the mean number of credit hours during the first semester
+mean_first_semester_credits <- graduated_students_9_semesters |>
+  dplyr::filter(Term.Code == Cohort.Term) |>
+  dplyr::summarize(mean_credits = mean(`Cum.Credit.Hours`, na.rm = TRUE)) |>
+  dplyr::pull(mean_credits)
+
+# Calculate the mean GPA at graduation
+mean_graduation_gpa <- graduated_students_9_semesters |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::summarize(mean_gpa = mean(`Cum.UG.Crs.GPA`, na.rm = TRUE)) |>
+  dplyr::pull(mean_gpa) |> 
+  mean(na.rm = TRUE)  # Get the overall mean across all students
+
+# Calculate the percentage of students who graduated with more than one major
+# We only want one result for the percentage, not grouped by Student.ID
+percentage_more_than_one_major <- graduated_students_9_semesters |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::mutate(num_majors = stringr::str_count(All_Majors, ", ") + 1) |>
+  dplyr::summarize(more_than_one_major = sum(num_majors > 1)) |>
+  dplyr::ungroup() |>
+  dplyr::summarize(percentage = (sum(more_than_one_major > 0) / n()) * 100) |>
+  dplyr::pull(percentage)
+
+# Create a summary table with a single row
+summary_table <- tibble::tibble(
+  `Mean First Semester Credits` = mean_first_semester_credits,
+  `Mean Graduation GPA` = mean_graduation_gpa,
+  `Percentage with More Than One Major` = percentage_more_than_one_major
+)
+
+# Display the summary table
+knitr::kable(summary_table, 
+             caption = "Summary of Student Graduation Data") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+```
+
+While this student has a higher number of first semester credits, this student had an undeclared business major. In addition we see that this student has a much lower GPA than students who graduate early. Let's check the average graduation GPA to see if this differs significantly.
+
+```{r, echo=FALSE}
+# Step 1: Identify students who graduated with a "IS Major"
+students_with_is_major <- IS |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Step 2: Calculate the average GPA for these students
+average_gpa_is_major <- students_with_is_major |>
+  dplyr::summarize(Average_GPA = mean(Cum.UG.Crs.GPA, na.rm = TRUE))
+
+# Display the average GPA
+knitr::kable(average_gpa_is_major, 
+             col.names = c("Average GPA"), 
+             caption = "Average GPA for Students Graduated with BA Major") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+
+```{r, echo=FALSE}
+# Step 1: Identify students who graduated in 6 semesters
+students_9_semesters <- semester_counts |>
+  dplyr::filter(Semester_Count == 9) |>
+  dplyr::select(Student.ID)
+
+# Step 2: Get the rows from the IS dataframe for these students
+students_9_semesters_data <- IS |>
+  dplyr::filter(Student.ID %in% students_9_semesters$Student.ID)
+
+# Step 3: Filter for students who have "IS Major" in their final term
+students_with_is_major <- students_9_semesters_data |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Step 4: Select only the first and last row for each Student.ID (first and last semester)
+graduated_students_9_semesters <- students_9_semesters_data |>
+  dplyr::filter(Student.ID %in% students_with_is_major$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == min(Term.Code) | Term.Code == max(Term.Code)) |>
+  dplyr::ungroup()
+
+# Step 5: For the first and last semester, collapse majors into a single column (one for each row)
+graduated_students_9_semesters <- graduated_students_9_semesters |>
+  dplyr::group_by(Student.ID, Term.Code) |>
+  dplyr::mutate(All_Majors = paste(unique(na.omit(c(Major.1, Major.2, Major.3)[c(Major.1, Major.2, Major.3) != "None"])), collapse = ", ")) |>
+  dplyr::ungroup()
+
+# Step 6: Remove duplicate rows by Student.ID and Term.Code (to avoid repeated majors for students with multiple majors)
+graduated_students_9_semesters <- graduated_students_9_semesters |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE) |>
+  dplyr::select(Student.ID, Cohort.Term, Term.Code, Cum.Credit.Hours, Cum.UG.Crs.GPA, All_Majors)
+
+# Step 7: Filter out students who graduated in term 202510
+graduated_students_9_semesters <- graduated_students_9_semesters |>
+  dplyr::filter(Term.Code != 202510)
+
+# Step 8: Calculate the credit hours per semester
+credit_hours_per_semester <- students_9_semesters_data |>
+  dplyr::filter(Student.ID %in% graduated_students_9_semesters$Student.ID) |>
+  dplyr::arrange(Student.ID, Term.Code) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::mutate(Credit_Hours_Semester = Cum.Credit.Hours - dplyr::lag(Cum.Credit.Hours, default = 0)) |>
+  dplyr::ungroup()
+
+# Step 9: Calculate the aggregated average credit hours per semester
+total_credit_hours <- sum(credit_hours_per_semester$Credit_Hours_Semester, na.rm = TRUE)
+total_semesters <- nrow(credit_hours_per_semester)
+avg_credit_hours_per_semester_aggregated <- total_credit_hours / total_semesters
+
+# Display the aggregated average credit hours per semester
+knitr::kable(data.frame(Average_Credit_Hours_Per_Semester = avg_credit_hours_per_semester_aggregated), 
+             col.names = c("Average Credit Hours per Semester"), 
+             caption = "Aggregated Average Credit Hours per Semester for Graduated Students") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+
+This data confirms our assumption that students who have graduated in 9 semesters have taken less of a credit hour load than the normal student body. The average amount of credit hours that students are completing on a semesterly basis may be something for the ISA department to consider as they track student progress, and potentially try and flag students who are falling behind.
+
+Now that we have closely examined student who  graduated in 9 semesters, let's see if this pattern is still true for the students who graduated in 10 semesters.
+
+```{r, echo=FALSE}
+# Step 1: Identify students who graduated in 10 semesters
+students_10_semesters <- semester_counts |>
+  dplyr::filter(Semester_Count == 10) |>
+  dplyr::select(Student.ID)
+
+# Step 2: Get the rows from the IS dataframe for these students
+students_10_semesters_data <- IS |>
+  dplyr::filter(Student.ID %in% students_10_semesters$Student.ID)
+
+# Step 3: Filter for students who have "IS Major" in their final term
+students_with_is_major <- students_10_semesters_data |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Step 4: Select only the first and last row for each Student.ID (first and last semester)
+graduated_students_10_semesters <- students_10_semesters_data |>
+  dplyr::filter(Student.ID %in% students_with_is_major$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == min(Term.Code) | Term.Code == max(Term.Code)) |>
+  dplyr::ungroup()
+
+# Step 5: For the first and last semester, collapse majors into a single column (one for each row)
+graduated_students_10_semesters <- graduated_students_10_semesters |>
+  dplyr::group_by(Student.ID, Term.Code) |>
+  dplyr::mutate(All_Majors = paste(unique(na.omit(c(Major.1, Major.2, Major.3)[c(Major.1, Major.2, Major.3) != "None"])), collapse = ", ")) |>
+  dplyr::ungroup()
+
+# Step 6: Remove duplicate rows by Student.ID and Term.Code (to avoid repeated majors for students with multiple majors)
+graduated_students_10_semesters <- graduated_students_10_semesters |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE) |>
+  dplyr::select(Student.ID, Cohort.Term, Term.Code, Cum.Credit.Hours, Cum.UG.Crs.GPA, All_Majors)
+
+# Display the distribution in a formatted table with a colored header
+knitr::kable(graduated_students_10_semesters, 
+             col.names = c("Student ID", "Cohort Term", "Term Code", "Cumulative Credit Hours", "Cumulative GPA", "Major(s)"), 
+             caption = "Distribution of Semesters to Graduation") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::column_spec(2) |>
+  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+
+Let's look at some of these factors on a higher level: 
+
+```{r, echo=FALSE}
+# Calculate the mean number of credit hours during the first semester
+mean_first_semester_credits <- graduated_students_10_semesters |>
+  dplyr::filter(Term.Code == Cohort.Term) |>
+  dplyr::summarize(mean_credits = mean(`Cum.Credit.Hours`, na.rm = TRUE)) |>
+  dplyr::pull(mean_credits)
+
+# Calculate the mean GPA at graduation
+mean_graduation_gpa <- graduated_students_10_semesters |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::summarize(mean_gpa = mean(`Cum.UG.Crs.GPA`, na.rm = TRUE)) |>
+  dplyr::pull(mean_gpa) |> 
+  mean(na.rm = TRUE)  # Get the overall mean across all students
+
+# Calculate the percentage of students who graduated with more than one major
+# We only want one result for the percentage, not grouped by Student.ID
+percentage_more_than_one_major <- graduated_students_9_semesters |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::mutate(num_majors = stringr::str_count(All_Majors, ", ") + 1) |>
+  dplyr::summarize(more_than_one_major = sum(num_majors > 1)) |>
+  dplyr::ungroup() |>
+  dplyr::summarize(percentage = (sum(more_than_one_major > 0) / n()) * 100) |>
+  dplyr::pull(percentage)
+
+# Create a summary table with a single row
+summary_table <- tibble::tibble(
+  `Mean First Semester Credits` = mean_first_semester_credits,
+  `Mean Graduation GPA` = mean_graduation_gpa,
+  `Percentage with More Than One Major` = percentage_more_than_one_major
+)
+
+# Display the summary table
+knitr::kable(summary_table, 
+             caption = "Summary of Student Graduation Data") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+```
+
+Similarly to the students who graduated with an Information Systems major in 9 semesters, those who graduated in 10 semesters have switched their majors since their first semester.
+
+Let's see if the number of credit hours they are taking per semester has an impact on their graduation.
+
+```{r, echo=FALSE}
+# Step 1: Identify students who graduated in 10 semesters
+students_10_semesters <- semester_counts |>
+  dplyr::filter(Semester_Count == 10) |>
+  dplyr::select(Student.ID)
+
+# Step 2: Get the rows from the IS dataframe for these students
+students_10_semesters_data <- IS |>
+  dplyr::filter(Student.ID %in% students_10_semesters$Student.ID)
+
+# Step 3: Filter for students who have "IS Major" in their final term
+students_with_is_major <- students_10_semesters_data |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == max(Term.Code)) |>
+  dplyr::filter(Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major") |>
+  dplyr::ungroup()
+
+# Step 4: Select only the first and last row for each Student.ID (first and last semester)
+graduated_students_10_semesters <- students_10_semesters_data |>
+  dplyr::filter(Student.ID %in% students_with_is_major$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::filter(Term.Code == min(Term.Code) | Term.Code == max(Term.Code)) |>
+  dplyr::ungroup()
+
+# Step 5: For the first and last semester, collapse majors into a single column (one for each row)
+graduated_students_10_semesters <- graduated_students_10_semesters |>
+  dplyr::group_by(Student.ID, Term.Code) |>
+  dplyr::mutate(All_Majors = paste(unique(na.omit(c(Major.1, Major.2, Major.3)[c(Major.1, Major.2, Major.3) != "None"])), collapse = ", ")) |>
+  dplyr::ungroup()
+
+# Step 6: Remove duplicate rows by Student.ID and Term.Code (to avoid repeated majors for students with multiple majors)
+graduated_students_10_semesters <- graduated_students_10_semesters |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE) |>
+  dplyr::select(Student.ID, Cohort.Term, Term.Code, Cum.Credit.Hours, Cum.UG.Crs.GPA, All_Majors)
+
+# Step 7: Filter out students who graduated in term 202510
+graduated_students_10_semesters <- graduated_students_10_semesters |>
+  dplyr::filter(Term.Code != 202510)
+
+# Step 8: Calculate the credit hours per semester
+credit_hours_per_semester <- students_10_semesters_data |>
+  dplyr::filter(Student.ID %in% graduated_students_10_semesters$Student.ID) |>
+  dplyr::arrange(Student.ID, Term.Code) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::mutate(Credit_Hours_Semester = Cum.Credit.Hours - dplyr::lag(Cum.Credit.Hours, default = 0)) |>
+  dplyr::ungroup()
+
+# Step 9: Calculate the aggregated average credit hours per semester
+total_credit_hours <- sum(credit_hours_per_semester$Credit_Hours_Semester, na.rm = TRUE)
+total_semesters <- nrow(credit_hours_per_semester)
+avg_credit_hours_per_semester_aggregated <- total_credit_hours / total_semesters
+
+# Display the aggregated average credit hours per semester
+knitr::kable(data.frame(Average_Credit_Hours_Per_Semester = avg_credit_hours_per_semester_aggregated), 
+             col.names = c("Average Credit Hours per Semester"), 
+             caption = "Aggregated Average Credit Hours per Semester for Graduated Students") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::column_spec(1) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light blue header
+```
+
+Conversely to students who graduated in 9 semesters, students who took 10 semesters to graduate have more average credit hours per semester than the average Information Systems graduate. This is most likely due to these students switching their major later into their academic year.
+
+
+# **Next Steps**
 
 In our current file, we have data grouped by Cohort Term for both our BA and IS data sets. A student’s cohort term indicates the first semester in which they started at Miami, while the Term Code indicates each semester that a student has been enrolled in the university.
 
