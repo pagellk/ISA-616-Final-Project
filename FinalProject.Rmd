@@ -188,12 +188,13 @@ graduation_terms <- BA |>
   dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
 
 # Filter the original data to only include rows where the Term.Code is the graduation term
-graduated_students <- BA |>
-  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+graduated_students <- BA |> 
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |> 
   dplyr::filter(
-    `Term.Code.Graduated` == `Term.Code`,
-    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
+    `Term.Code.Graduated` == `Term.Code`, 
+    (`Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major")
   )
+
 
 # Count the number of students who graduated each semester for each Term.Code
 result <- graduated_students |>
@@ -221,6 +222,10 @@ result <- result |>
     )
   ) |>
   dplyr::mutate(Term_Type = factor(Term_Type, levels = c("Spring", "Fall")))
+
+# Filter the result to only include academic years from 2020-2021 onward
+result <- result |>
+  dplyr::filter(Academic_Year %in% c("2020-2021", "2021-2022", "2022-2023", "2023-2024", "2024-2025"))
 
 # Create a stacked bar plot
 ggplot2::ggplot(result, ggplot2::aes(x = Academic_Year, y = Num_Graduated, fill = Term_Type)) + 
@@ -264,39 +269,89 @@ result <- graduated_students |>
 
 result
 ```
-Let's more closely take at those who graduated last spring:
-
 ```{r, echo=FALSE}
-# Determine the maximum Term.Code for each Student.ID to identify the graduation term
-graduation_terms <- BA |>
-  dplyr::group_by(`Student.ID`) |>
-  dplyr::summarize(Max_Term_Code = max(`Term.Code`), .groups = 'drop')
+# Step 1: Calculate the number of semesters completed before the term 202410
+BA_prior <- BA |>
+  dplyr::filter(Term.Code < 202410) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarise(Semesters_Completed = dplyr::n_distinct(Term.Code), .groups = 'drop')
 
-# Filter the original data to only include rows where the Term.Code is the graduation term
-graduated_students <- BA |>
-  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+# Step 2: Join with the original data to get the classification based on semesters completed before 202410
+result <- BA |>
   dplyr::filter(
-    `Term.Code.Graduated` == `Term.Code`,
-    `Major.1` == "BA Major" | `Major.2` == "BA Major" | `Major.3` == "BA Major"
-  )
+    (Major.1 == "BA Major" | 
+     Major.2 == "BA Major" | 
+     Major.3 == "BA Major") & 
+    Term.Code == 202410
+  ) |>
+  dplyr::left_join(BA_prior, by = "Student.ID") |>
+  dplyr::mutate(Semesters_Completed = dplyr::if_else(is.na(Semesters_Completed), 0, Semesters_Completed)) |>
+  dplyr::mutate(Classification = dplyr::case_when(
+    Semesters_Completed < 2 ~ "Freshmen",
+    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
+    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
+    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
+    Semesters_Completed >= 8 ~ "Super Senior"
+  )) |>
+  dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
+  dplyr::group_by(Term.Code, Classification) |>
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID), .groups = 'drop') |>
+  dplyr::arrange(Classification)
 
-# Count the number of students who graduated each semester for each Term.Code
-result <- graduated_students |>
-  dplyr::group_by(`Cohort.Term`, `Term.Code`) |>
-  dplyr::summarize(Num_Graduated = dplyr::n_distinct(`Student.ID`), .groups = 'drop')|>
-  dplyr::filter(`Term.Code` == 202420)
+# Display the result in a formatted table
+if(require(knitr)==FALSE) install.packages("knitr")
+if(require(kableExtra)==FALSE) install.packages("kableExtra")
 
-
-# Display the distribution in a formatted table with a colored header
-knitr::kable(result, col.names = c("Cohort Term", "Term Code", "Number of Graduates"), caption = "Spring 2024 Graduates") |>
+knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Students"), caption = "Student Classification for Spring 2024") |>
   kableExtra::kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
     full_width = FALSE,
     position = "center"
   ) |>
-  kableExtra::column_spec(1) |>
-  kableExtra::column_spec(2) |>
-  kableExtra::column_spec(3) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
+```
+
+Let's more closely take at those who graduated last spring:
+
+```{r, echo=FALSE}
+# Step 1: Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- BA |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarize(Max_Term_Code = max(Term.Code), .groups = 'drop')
+
+# Step 2: Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- BA |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    Term.Code.Graduated %in% c(202410, 202420),
+    Major.1 == "BA Major" | Major.2 == "BA Major" | Major.3 == "BA Major"
+  )
+
+# Step 3: Count the number of terms each student was enrolled in
+student_terms_count <- BA |>
+  dplyr::filter(Student.ID %in% graduated_students$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarize(Num_Semesters = dplyr::n_distinct(Term.Code), .groups = 'drop')
+
+# Step 4: Join the number of semesters back to the graduated students data
+graduated_students <- graduated_students |>
+  dplyr::left_join(student_terms_count, by = "Student.ID")
+
+# Step 5: Count the number of graduates by the number of semesters
+result <- graduated_students |>
+  dplyr::group_by(Num_Semesters) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(Student.ID), .groups = 'drop')
+
+# Display the distribution in a formatted table with a colored header
+if(require(knitr)==FALSE) install.packages("knitr")
+if(require(kableExtra)==FALSE) install.packages("kableExtra")
+
+knitr::kable(result, col.names = c("Number of Semesters", "Number of Graduates"), caption = "Graduates by Number of Semesters for Academic Year 2023-2024") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
   kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
 ```
 
@@ -347,45 +402,44 @@ With the current distribution of values within our data set, I can see that 80.1
 Before we examine the possibility of classifying students as per the number of semesters they have completed at Miami, let's first take a look into our data to see what the distribution of the number of credit hours students complete when they graduate.
 
 ```{r, echo=FALSE}
-
 # Step 1: Identify the maximum Term.Code for each student
-BA <- BA %>%
-  group_by(Student.ID) %>%
-  mutate(max_term_code = max(Term.Code)) %>%
-  ungroup()
+BA <- BA |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::mutate(max_term_code = max(Term.Code)) |>
+  dplyr::ungroup()
 
 # Step 2: Identify graduated students by comparing Term.Code.Graduated to their max Term.Code
-BA <- BA %>%
-  mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
+BA <- BA |>
+  dplyr::mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
 
 # Step 3: Filter for students who have graduated and capture their cumulative credit hours at graduation
-graduated_students <- BA %>%
-  filter(graduated == TRUE) %>%
-  select(Student.ID, Cum.Credit.Hrs)
+graduated_students <- BA |>
+  dplyr::filter(graduated == TRUE, Term.Code < 202510) |>
+  dplyr::select(Student.ID, Cum.Credit.Hrs)
 
 # Step 4: Visualize the distribution of cumulative credit hours at graduation
-library(ggplot2)
+if(require(ggplot2)==FALSE) install.packages("ggplot2")
 
 # Plot the distribution of cumulative credit hours at graduation
-ggplot(graduated_students, aes(x = Cum.Credit.Hrs)) +
-  geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
-  labs(
+ggplot2::ggplot(graduated_students, ggplot2::aes(x = Cum.Credit.Hrs)) +
+  ggplot2::geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
+  ggplot2::labs(
     title = "Distribution of Cumulative Credit Hours at Graduation",
     x = "Cumulative Credit Hours",
     y = "Number of Students"
   ) +
-  theme_minimal()
+  ggplot2::theme_minimal()
 ```
 
 As shown by this graph, students will graduate from Miami University with a wide variety of cumulative credit hours completed. This data could somewhat be impacted by how many transfer credits that a student has from high school, their number of majors and minors, and potentially if they want to be CPA eligible. Below we will detail some further statistics regarding those in our data set who have graduated with a Business Analytics Degree.
 ```{r, echo=FALSE}
-# Step 1: Filter for graduated students and ensure non-missing credit hours
-graduated_students <- BA %>% 
-  filter(graduated == TRUE & !is.na(Cum.Credit.Hrs))  # Only include graduated students with valid credit hours
+# Step 1: Filter for graduated students with valid credit hours and a Term.Code.Graduated of 202510 or higher
+graduated_students <- BA |>
+  dplyr::filter(graduated == TRUE, !is.na(Cum.Credit.Hrs), Term.Code.Graduated < 202510)
 
 # Step 2: Calculate the min, mean, and max number of Cum.Credit.Hrs for graduated students
-graduation_stats <- graduated_students %>%
-  summarise(
+graduation_stats <- graduated_students |>
+  dplyr::summarise(
     min_credit_hours = min(Cum.Credit.Hrs, na.rm = TRUE),
     mean_credit_hours = mean(Cum.Credit.Hrs, na.rm = TRUE),
     max_credit_hours = max(Cum.Credit.Hrs, na.rm = TRUE)
@@ -395,13 +449,15 @@ graduation_stats <- graduated_students %>%
 colnames(graduation_stats) <- c("Minimum Credit Hours", "Mean Credit Hours", "Maximum Credit Hours")
 
 # Create the table with customized headers and styling
-knitr::kable(graduation_stats, caption = "Graduated Students' Cumulative Credit Hours Statistics") %>%
-  # Apply bold styling to the header row and change background color
+if(require(knitr)==FALSE) install.packages("knitr")
+if(require(kableExtra)==FALSE) install.packages("kableExtra")
+
+knitr::kable(graduation_stats, caption = "Graduated Students' Cumulative Credit Hours Statistics") |>
   kableExtra::kable_styling(
     bootstrap_options = c("striped", "hover", "responsive"),
-    full_width = F
-  ) %>%
-  kableExtra::column_spec(1:3, bold = TRUE) %>%  # Make header titles bold
+    full_width = FALSE
+  ) |>
+  kableExtra::column_spec(1:3, bold = TRUE) |>  # Make header titles bold
   kableExtra::row_spec(0, background = "#ADD8E6")  # Change background color of the header row (light blue)
 ```
 ```{r, echo=FALSE}
@@ -489,28 +545,40 @@ BA |>
   dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |> 
   print()
 ```
-When I classify a student's grade classification, assuming that on average each student completes 15 credit hours per semester, I start to notice a couple of problems. For starters, let's examine term code 202420, referencing Spring Semester 2024: 
+When I classify a student's grade classification, assuming that on average each student completes 15 credit hours per semester, I start to notice a couple of problems. For starters, let's examine the incoming pipeline number for last fall: 
 
 ```{r,echo=FALSE}
+# Step 1: Calculate cumulative credit hours before the term 202410
+BA_prior <- BA |>
+  dplyr::filter(Term.Code < 202410) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarise(Cum.Credit.Hrs.Before = max(Cum.Credit.Hrs, na.rm = TRUE), .groups = 'drop')
+
+# Step 2: Join with the original data to get the classification based on credit hours before 202410
 result <- BA |>
   dplyr::filter(
     (Major.1 == "BA Major" | 
      Major.2 == "BA Major" | 
      Major.3 == "BA Major") & 
-    Term.Code == 202420
+    Term.Code == 202410
   ) |>
+  dplyr::left_join(BA_prior, by = "Student.ID") |>
+  dplyr::mutate(Cum.Credit.Hrs.Before = dplyr::if_else(is.na(Cum.Credit.Hrs.Before), 0, Cum.Credit.Hrs.Before)) |>
   dplyr::mutate(Classification = dplyr::case_when(
-    Cum.Credit.Hrs >= 0 & Cum.Credit.Hrs < 30 ~ "Freshmen",
-    Cum.Credit.Hrs >= 30 & Cum.Credit.Hrs < 60 ~ "Sophomore",
-    Cum.Credit.Hrs >= 60 & Cum.Credit.Hrs < 90 ~ "Junior",
-    Cum.Credit.Hrs >= 90 ~ "Senior"
+    Cum.Credit.Hrs.Before >= 0 & Cum.Credit.Hrs.Before < 30 ~ "Freshmen",
+    Cum.Credit.Hrs.Before >= 30 & Cum.Credit.Hrs.Before < 60 ~ "Sophomore",
+    Cum.Credit.Hrs.Before >= 60 & Cum.Credit.Hrs.Before < 90 ~ "Junior",
+    Cum.Credit.Hrs.Before >= 90 ~ "Senior"
   )) |>
   dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior"))) |>
   dplyr::group_by(Term.Code, Classification) |>
-  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID)) |>
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID), .groups = 'drop') |>
   dplyr::arrange(Classification)
 
 # Display the result in a formatted table
+if(require(knitr)==FALSE) install.packages("knitr")
+if(require(kableExtra)==FALSE) install.packages("kableExtra")
+
 knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Students"), caption = "Student Classification for Spring 2024") |>
   kableExtra::kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
@@ -1252,6 +1320,38 @@ From our analyses of students who have graduated behind schedule, we have three 
 2. Number of Credit Hours Taken per Semester - This may coincide with GPA, as a student will not get credit for a class if they do not pass it. However, the department should be closely monitoring these numbers to identify students who may be at risk of completing their Business Analytics degree late. Miami University considers a full time student to be one that takes 12 credit hours per semester, so students taking an average less than that may be on a path to fall behind.
 3. Changing Majors - The department also has data to track a student's progress through their time at Miami. Although this may not be as significant of a factor as GPA or Credit Hours, the department should consider closely watching students who change their major, particularly between academic divisions. These students will likely have an increased number of requirements asked of them because of the change, and when they change their major should also be considered as students who change their major later in their academic career will be less likely to finish on time. 
 
+To summarize, we have found that classification by number of semesters completed appears to be the most accurate method. Thus, we will add a column to our dataset to keep track of student classification as they progress through their time at Miami.
+
+```{r, echo=FALSE}
+# Step 1: Ensure unique term codes for each student
+BA_unique_terms <- BA |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE)
+
+# Step 2: Calculate the number of semesters completed for each student up to each term
+BA_with_semesters <- BA_unique_terms |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::arrange(Term.Code) |>
+  dplyr::mutate(Semesters_Completed = dplyr::row_number() - 1) |>
+  dplyr::ungroup()
+
+# Step 3: Add classification based on the number of semesters completed
+BA_with_classification <- BA_with_semesters |>
+  dplyr::mutate(Classification = dplyr::case_when(
+    Semesters_Completed < 2 ~ "Freshman",
+    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
+    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
+    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
+    Semesters_Completed >= 8 ~ "Super Senior"
+  )) |>
+  dplyr::mutate(Classification = factor(Classification, levels = c("Freshman", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
+  dplyr::arrange(Student.ID, Term.Code)  # Sort by Student.ID and Term.Code
+
+# Display a sample of the updated dataset
+head(BA_with_classification)
+
+```
+
+
 
 ## IS Majors
 
@@ -1461,32 +1561,148 @@ knitr::kable(distribution, col.names = c("Number of Semesters", "Number of Stude
 ```{r, echo=FALSE}
 # Step 1: Identify the maximum Term.Code for each student
 IS <- IS |>
-  group_by(Student.ID) |>
-  mutate(max_term_code = max(Term.Code)) |>
-  ungroup()
+  dplyr::group_by(Student.ID) |>
+  dplyr::mutate(max_term_code = max(Term.Code)) |>
+  dplyr::ungroup()
 
 # Step 2: Identify graduated students by comparing Term.Code.Graduated to their max Term.Code
 IS <- IS |>
-  mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
+  dplyr::mutate(graduated = ifelse(Term.Code == Term.Code.Graduated & Term.Code == max_term_code, TRUE, FALSE))
 
 # Step 3: Filter for students who have graduated and capture their cumulative credit hours at graduation
 graduated_students <- IS |>
-  filter(graduated == TRUE) |>
-  select(Student.ID, Cum.Credit.Hours)
+  dplyr::filter(graduated == TRUE, Term.Code.Graduated < 202510) |>
+  dplyr::select(Student.ID, Cum.Credit.Hours)
 
 # Step 4: Visualize the distribution of cumulative credit hours at graduation
-library(ggplot2)
+if(require(ggplot2)==FALSE) install.packages("ggplot2")
 
-ggplot(graduated_students, aes(x = Cum.Credit.Hours)) +
-  geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
-  labs(
+ggplot2::ggplot(graduated_students, ggplot2::aes(x = Cum.Credit.Hours)) +
+  ggplot2::geom_histogram(binwidth = 5, color = "black", fill = "#ADD8E6", alpha = 0.7) +
+  ggplot2::labs(
     title = "Distribution of Cumulative Credit Hours at Graduation",
     x = "Cumulative Credit Hours",
     y = "Number of Students"
   ) +
-  theme_minimal()
+  ggplot2::theme_minimal()
 
 ```
+```{r, echo=FALSE}
+# Step 1: Determine the maximum Term.Code for each Student.ID to identify the graduation term
+graduation_terms <- IS |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarize(Max_Term_Code = max(Term.Code), .groups = 'drop')
+
+# Step 2: Filter the original data to only include rows where the Term.Code is the graduation term
+graduated_students <- IS |>
+  dplyr::inner_join(graduation_terms, by = c("Student.ID" = "Student.ID", "Term.Code" = "Max_Term_Code")) |>
+  dplyr::filter(
+    Term.Code.Graduated %in% c(202410, 202420),
+    Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major" |
+    Major.1 == "Cybersecurity Mgt Major" | Major.2 == "Cybersecurity Mgt Major" |
+    Major.3 == "Cybersecurity Mgt Major"
+  )
+
+# Step 3: Count the number of terms each student was enrolled in
+student_terms_count <- IS |>
+  dplyr::filter(Student.ID %in% graduated_students$Student.ID) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarize(Num_Semesters = dplyr::n_distinct(Term.Code), .groups = 'drop')
+
+# Step 4: Join the number of semesters back to the graduated students data
+graduated_students <- graduated_students |>
+  dplyr::left_join(student_terms_count, by = "Student.ID")
+
+# Step 5: Count the number of graduates by the number of semesters
+result <- graduated_students |>
+  dplyr::group_by(Num_Semesters) |>
+  dplyr::summarize(Num_Graduated = dplyr::n_distinct(Student.ID), .groups = 'drop')
+
+# Display the distribution in a formatted table with a colored header
+if(require(knitr)==FALSE) install.packages("knitr")
+if(require(kableExtra)==FALSE) install.packages("kableExtra")
+
+knitr::kable(result, col.names = c("Number of Semesters", "Number of Graduates"), caption = "Graduates by Number of Semesters for Academic Year 2023-2024") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
+```
+```{r, echo=FALSE}
+# Step 1: Calculate the number of semesters completed before the term 202410
+IS_prior <- IS |>
+  dplyr::filter(Term.Code < 202410) |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::summarise(Semesters_Completed = dplyr::n_distinct(Term.Code), .groups = 'drop')
+
+# Step 2: Join with the original data to get the classification based on semesters completed before 202410
+result <- IS |>
+  dplyr::filter(
+    (Major.1 == "IS Major" | Major.2 == "IS Major" | Major.3 == "IS Major" |
+    Major.1 == "Cybersecurity Mgt Major" | Major.2 == "Cybersecurity Mgt Major" |
+    Major.3 == "Cybersecurity Mgt Major"
+    ) & 
+    Term.Code == 202410
+  ) |>
+  dplyr::left_join(IS_prior, by = "Student.ID") |>
+  dplyr::mutate(Semesters_Completed = dplyr::if_else(is.na(Semesters_Completed), 0, Semesters_Completed)) |>
+  dplyr::mutate(Classification = dplyr::case_when(
+    Semesters_Completed < 2 ~ "Freshmen",
+    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
+    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
+    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
+    Semesters_Completed >= 8 ~ "Super Senior"
+  )) |>
+  dplyr::mutate(Classification = factor(Classification, levels = c("Freshmen", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
+  dplyr::group_by(Term.Code, Classification) |>
+  dplyr::summarise(Num_Students = dplyr::n_distinct(Student.ID), .groups = 'drop') |>
+  dplyr::arrange(Classification)
+
+# Display the result in a formatted table
+if(require(knitr)==FALSE) install.packages("knitr")
+if(require(kableExtra)==FALSE) install.packages("kableExtra")
+
+knitr::kable(result, col.names = c("Term Code", "Classification", "Number of Students"), caption = "Student Classification for Spring 2024") |>
+  kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  kableExtra::row_spec(0, background = "#ADD8E6")  # Light gray header
+```
+Add a column to IS data set that keeps track of a student's grade classification.
+```{r, echo=FALSE}
+# Step 1: Ensure unique term codes for each student
+IS_unique_terms <- IS |>
+  dplyr::distinct(Student.ID, Term.Code, .keep_all = TRUE)
+
+# Step 2: Calculate the number of semesters completed for each student up to each term
+IS_with_semesters <- IS_unique_terms |>
+  dplyr::group_by(Student.ID) |>
+  dplyr::arrange(Term.Code) |>
+  dplyr::mutate(Semesters_Completed = dplyr::row_number() - 1) |>
+  dplyr::ungroup()
+
+# Step 3: Add classification based on the number of semesters completed
+IS_with_classification <- IS_with_semesters |>
+  dplyr::mutate(Classification = dplyr::case_when(
+    Semesters_Completed < 2 ~ "Freshman",
+    Semesters_Completed == 2 | Semesters_Completed == 3 ~ "Sophomore",
+    Semesters_Completed == 4 | Semesters_Completed == 5 ~ "Junior",
+    Semesters_Completed == 6 | Semesters_Completed == 7 ~ "Senior",
+    Semesters_Completed >= 8 ~ "Super Senior"
+  )) |>
+  dplyr::mutate(Classification = factor(Classification, levels = c("Freshman", "Sophomore", "Junior", "Senior", "Super Senior"))) |>
+  dplyr::arrange(Student.ID, Term.Code)  # Sort by Student.ID and Term.Code
+
+# Display a sample of the updated dataset
+head(IS_with_classification)
+
+```
+
+
 # Next Steps
 Now that we officially have our data sets cleaned and merged, we are ready to do some analyses on our data.
 
