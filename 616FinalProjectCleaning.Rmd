@@ -36,7 +36,7 @@ Finally, I make sure that each student has the Cohort Term that is equal to the 
 
 ```{r}
 # Read data
-BA_Majors=read_excel("BA Major Students - Majors.xlsx")
+BA_Majors=read_excel("initial-data/BA Major Students - Majors.xlsx")
 # Fill in the blank cells created from the format of the data
 BA_Majors=BA_Majors %>% 
   fill(c(`Student ID`:`Term Code`),.direction="down")
@@ -71,7 +71,7 @@ Loaded student grades, filled in missing cells according to the data structure. 
 
 ```{r}
 # Read data
-BA_Grades=read_excel("BA Major Students - Grades -updated.xlsx")
+BA_Grades=read_excel("initial-data/BA Major Students - Grades -updated.xlsx")
 # Fill in the blank cells created from the format of the data
 BA_Grades = BA_Grades %>% 
   fill(c(`Student ID`),.direction="down")
@@ -91,7 +91,7 @@ The level of analysis for the final data frame is Student ID X Term Code.
 
 ```{r}
 # Read data
-BA_Attributes=read_excel("BA Major Students - Attributes and GPA.xlsx")
+BA_Attributes=read_excel("initial-data/BA Major Students - Attributes and GPA.xlsx")
 # Fill in the blank cells created from the format of the data
 BA_Attributes = BA_Attributes %>% 
   fill(c(`Student ID`:`First Generation Indicator`),.direction="down")
@@ -106,7 +106,7 @@ paste("The number of students with no grades ",length(unique(test$`Student ID`))
 write.csv(BA_Attributes,"data-clean/BA_Attributes.csv")
 ```
 ```{r}
-ba_major_crhr = read_excel("BA Major Students - Credit Hours.xlsx")
+ba_major_crhr = read_excel("initial-data/BA Major Students - Credit Hours.xlsx")
 
 ba_major_crhr = ba_major_crhr %>% fill(c(`Student ID`),.direction="down")
 
@@ -116,7 +116,7 @@ head(ba_major_crhr)
 write.csv(ba_major_crhr, "data-clean/BA_CreditHours.csv")
 ```
 ```{r}
-ba_major_degrees_awarded = read_excel('BA Major Students - Degrees Awarded.xlsx')
+ba_major_degrees_awarded = read_excel('initial-data/BA Major Students - Degrees Awarded.xlsx')
 
 ba_major_degrees_awarded = ba_major_degrees_awarded %>% 
   fill(c(`Student ID`:`Term Code`: 
@@ -178,7 +178,7 @@ Finally, I make sure that each student has the Cohort Term that is equal to the 
 
 ```{r}
 # Read data
-IS_Majors=read_excel("IS Major Students - Majors.xlsx")
+IS_Majors=read_excel("initial-data/IS Major Students - Majors.xlsx")
 # Fill in the blank cells created from the format of the data
 IS_Majors=IS_Majors %>% 
   fill(c(`Student ID`:`Term Code`),.direction="down")
@@ -213,7 +213,7 @@ Loaded student grades, filled in missing cells according to the data structure. 
 
 ```{r}
 # Read data
-IS_Grades=read_excel("IS Major Students - Grades -updated.xlsx")
+IS_Grades=read_excel("initial-data/IS Major Students - Grades -updated.xlsx")
 # Fill in the blank cells created from the format of the data
 IS_Grades = IS_Grades %>% 
   fill(c(`Student ID`),.direction="down")
@@ -234,7 +234,7 @@ The level of analysis for the final data frame is Student ID X Term Code.
 
 ```{r}
 # Read data
-IS_Attributes=read_excel("IS Major Students - Attributes and GPA.xlsx")
+IS_Attributes=read_excel("initial-data/IS Major Students - Attributes and GPA.xlsx")
 # Fill in the blank cells created from the format of the data
 IS_Attributes = IS_Attributes %>% 
   fill(c(`Student ID`:`First Generation Indicator`),.direction="down")
@@ -249,7 +249,7 @@ paste("The number of students with no grades ",length(unique(test$`Student ID`))
 write.csv(IS_Attributes,"data-clean/IS_Attributes.csv")
 ```
 ```{r}
-is_major_crhr = read_excel("IS Major Students - Credit Hours.xlsx")
+is_major_crhr = read_excel("initial-data/IS Major Students - Credit Hours.xlsx")
 
 is_major_crhr = is_major_crhr %>% fill(c(`Student ID`),.direction="down")
 
@@ -261,7 +261,7 @@ write.csv(is_major_crhr, "data-clean/IS_CreditHours.csv")
 
 I will now clean the major degrees awared file for IS Majors. One field that is of particular interest to me is how many semesters it took a student to graduate, which can be displayed by the average of that field below. We found that, overwhelmingly, it took students 8 semester of coursework at Miami before they graduated. This provides our team with the valuable insight that graduation is likely better shown by the number of semesters of enrollment as opposed to number of credit hours completed.
 ```{r, echo=FALSE}
-is_major_degrees_awarded = read_excel('IS Major Students - Degrees Awarded (1).xlsx')
+is_major_degrees_awarded = read_excel('initial-data/IS Major Students - Degrees Awarded (1).xlsx')
 
 is_major_degrees_awarded = is_major_degrees_awarded %>% 
   fill(c(`Student ID`:`Term Code`: 
